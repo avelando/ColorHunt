@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomInput from "../components/CustomInput";
 
 const LoginScreen = ({ navigation }: { navigation: any }) => {
@@ -30,8 +31,10 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
       const data = await response.json();
 
       if (response.ok) {
+        await AsyncStorage.setItem("userToken", data.token);
+
         Alert.alert("Sucesso", "Login realizado!");
-        navigation.navigate("Home", { token: data.token });
+        navigation.navigate("Home");
       } else {
         Alert.alert("Erro", data.message || "Credenciais inválidas.");
       }
