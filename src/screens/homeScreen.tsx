@@ -7,17 +7,20 @@ import {
   TouchableOpacity,
   Alert,
   Image,
-  Button,
+  ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../config/firebaseConfig";
+import PaletteSelectionComponent from "../components/PaleteSelection";
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
   const [palettes, setPalettes] = useState<string[][]>([]);
   const [image, setImage] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [generatedPalettes, setGeneratedPalettes] = useState<string[][]>([]);
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -27,34 +30,26 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
 
     fetchToken();
     fetchPalettes();
-  }, []);
+  }, [token]);
 
   const fetchPalettes = async () => {
-    try {
-      if (!token) {
-        Alert.alert("Erro", "Usuário não autenticado.");
-        return;
-      }
+    if (!token) return;
 
-      const response = await fetch(
-        "https://colorhunt-api.onrender.com/api/photos",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    try {
+      setLoading(true);
+      const response = await fetch("https://colorhunt-api.onrender.com/api/photos", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const data = await response.json();
       if (response.ok) {
         setPalettes(data.palettes || []);
-      } else {
-        Alert.alert("Erro", data.message || "Não foi possível carregar as paletas.");
       }
     } catch (error) {
       console.error("Erro ao carregar paletas:", error);
-      Alert.alert("Erro", "Erro ao carregar paletas.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,38 +67,33 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setImage(result.assets[0].uri);
+
+      uploadToFirebase(result.assets[0].uri);
     }
   };
 
-  const uploadToFirebase = async () => {
-    if (!image) {
-      Alert.alert("Erro", "Nenhuma foto para enviar.");
-      return;
-    }
-
+  const uploadToFirebase = async (imageUri: string) => {
     try {
-      const response = await fetch(image);
+      setLoading(true);
+      const response = await fetch(imageUri);
       const blob = await response.blob();
       const filename = `images/${Date.now()}.jpg`;
       const imageRef = ref(storage, filename);
 
       await uploadBytes(imageRef, blob);
-
       const downloadUrl = await getDownloadURL(imageRef);
-      Alert.alert("Sucesso", "Foto enviada para o Firebase!");
 
-      await sendToAPI(downloadUrl);
+      sendToAPI(downloadUrl);
     } catch (error) {
       Alert.alert("Erro", "Não foi possível enviar a foto.");
       console.error("Erro ao enviar para o Firebase:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const sendToAPI = async (downloadUrl: string) => {
-    if (!token) {
-      Alert.alert("Erro", "Usuário não autenticado.");
-      return;
-    }
+    if (!token) return;
 
     try {
       const response = await fetch("https://colorhunt-api.onrender.com/api/photos", {
@@ -118,22 +108,35 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert("Sucesso", "Paleta gerada com sucesso!");
-        navigation.navigate("Palette", { palette: data.palette });
-      } else {
-        Alert.alert("Erro", data.message || "Não foi possível gerar a paleta.");
+        setGeneratedPalettes(data.palettes);
       }
     } catch (error) {
-      Alert.alert("Erro", "Erro ao comunicar com a API.");
       console.error("Erro ao comunicar com a API:", error);
     }
   };
+
+  const handlePaletteSelect = (palette: string[]) => {
+    Alert.alert("Paleta selecionada!", `Cores escolhidas: ${palette.join(", ")}`);
+    navigation.navigate("Home");
+  };
+
+  if (generatedPalettes.length > 0 && image) {
+    return (
+      <PaletteSelectionComponent
+        image={image}
+        palettes={generatedPalettes}
+        onSelect={handlePaletteSelect}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Minhas Paletas</Text>
 
-      {palettes.length === 0 ? (
+      {loading ? (
+        <ActivityIndicator size="large" color="#6200ee" />
+      ) : palettes.length === 0 ? (
         <Text style={styles.emptyText}>Nenhuma paleta disponível.</Text>
       ) : (
         <FlatList
@@ -150,13 +153,6 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
             </View>
           )}
         />
-      )}
-
-      {image && (
-        <View style={styles.imagePreview}>
-          <Image source={{ uri: image }} style={styles.image} />
-          <Button title="Enviar para Firebase" onPress={uploadToFirebase} />
-        </View>
       )}
 
       <TouchableOpacity style={styles.button} onPress={takePhoto}>
@@ -193,16 +189,6 @@ const styles = StyleSheet.create({
     height: 50,
     marginHorizontal: 5,
     borderRadius: 5,
-  },
-  imagePreview: {
-    marginVertical: 20,
-    alignItems: "center",
-  },
-  image: {
-    width: 200,
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 10,
   },
   button: {
     marginTop: 20,
