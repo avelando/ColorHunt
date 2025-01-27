@@ -13,41 +13,44 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../config/firebaseConfig";
-import PaletteSelectionComponent from "../components/PaleteSelection";
+import PaletteSelectionComponent from "../components/PaletteSelection";
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
   const [palettes, setPalettes] = useState<string[][]>([]);
   const [image, setImage] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [generatedPalettes, setGeneratedPalettes] = useState<string[][]>([]);
+  const [selectedPalette, setSelectedPalette] = useState<string[] | null>(null);
 
   useEffect(() => {
     const fetchToken = async () => {
       const savedToken = await AsyncStorage.getItem("userToken");
       setToken(savedToken);
     };
-
+  
     fetchToken();
-    fetchPalettes();
+  }, []);
+  
+  useEffect(() => {
+    if (token) {
+      fetchSavedPalette();
+    }
   }, [token]);
 
-  const fetchPalettes = async () => {
-    if (!token) return;
-
+  const fetchSavedPalette = async () => {
     try {
       setLoading(true);
-      const response = await fetch("https://colorhunt-api.onrender.com/api/photos", {
+      const response = await fetch("https://colorhunt-api.onrender.com/api/users/palette", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await response.json();
-      if (response.ok) {
-        setPalettes(data.palettes || []);
+      if (response.ok && data.palette) {
+        setSelectedPalette(data.palette);
       }
     } catch (error) {
-      console.error("Erro ao carregar paletas:", error);
+      console.error("Erro ao buscar paleta salva:", error);
     } finally {
       setLoading(false);
     }
@@ -66,9 +69,10 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImage(result.assets[0].uri);
+      const photoUri = result.assets[0].uri;
+      setImage(photoUri);
 
-      uploadToFirebase(result.assets[0].uri);
+      uploadToFirebase(photoUri);
     }
   };
 
@@ -83,18 +87,16 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
       await uploadBytes(imageRef, blob);
       const downloadUrl = await getDownloadURL(imageRef);
 
-      sendToAPI(downloadUrl);
+      await uploadToAPI(downloadUrl);
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível enviar a foto.");
-      console.error("Erro ao enviar para o Firebase:", error);
+      Alert.alert("Erro", "Erro ao enviar a imagem.");
+      console.error("Erro no Firebase:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const sendToAPI = async (downloadUrl: string) => {
-    if (!token) return;
-
+  const uploadToAPI = async (imageUrl: string) => {
     try {
       const response = await fetch("https://colorhunt-api.onrender.com/api/photos", {
         method: "POST",
@@ -102,33 +104,40 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageUrl: downloadUrl }),
+        body: JSON.stringify({ imageUrl }),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
-        setGeneratedPalettes(data.palettes);
+        setPalettes(data.palettes || []);
       }
     } catch (error) {
-      console.error("Erro ao comunicar com a API:", error);
+      console.error("Erro ao enviar para API:", error);
     }
   };
 
-  const handlePaletteSelect = (palette: string[]) => {
-    Alert.alert("Paleta selecionada!", `Cores escolhidas: ${palette.join(", ")}`);
-    navigation.navigate("Home");
-  };
+  const handlePaletteSelect = async (palette: string[]) => {
+    try {
+      const response = await fetch("https://colorhunt-api.onrender.com/api/users/palette", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ palette }),
+      });
 
-  if (generatedPalettes.length > 0 && image) {
-    return (
-      <PaletteSelectionComponent
-        image={image}
-        palettes={generatedPalettes}
-        onSelect={handlePaletteSelect}
-      />
-    );
-  }
+      if (response.ok) {
+        setSelectedPalette(palette);
+        setPalettes([]);
+        setImage(null);
+        Alert.alert("Paleta salva com sucesso!");
+      }
+    } catch (error) {
+      console.error("Erro ao salvar paleta:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -136,28 +145,30 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
 
       {loading ? (
         <ActivityIndicator size="large" color="#6200ee" />
-      ) : palettes.length === 0 ? (
-        <Text style={styles.emptyText}>Nenhuma paleta disponível.</Text>
+      ) : selectedPalette ? (
+        <View style={styles.paletteContainer}>
+          <Text style={styles.subtitle}>Paleta Selecionada:</Text>
+          <View style={styles.colorRow}>
+            {selectedPalette.map((color, index) => (
+              <View key={index} style={[styles.colorBox, { backgroundColor: color }]} />
+            ))}
+          </View>
+        </View>
       ) : (
-        <FlatList
-          data={palettes}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.paletteContainer}>
-              {item.map((color, index) => (
-                <View
-                  key={index}
-                  style={[styles.colorBox, { backgroundColor: color }]}
-                />
-              ))}
-            </View>
-          )}
-        />
+        <Text style={styles.emptyText}>Nenhuma paleta selecionada.</Text>
       )}
 
-      <TouchableOpacity style={styles.button} onPress={takePhoto}>
-        <Text style={styles.buttonText}>Tirar Foto</Text>
-      </TouchableOpacity>
+      {image && palettes.length > 0 ? (
+        <PaletteSelectionComponent
+          image={image}
+          palettes={palettes}
+          onSelect={handlePaletteSelect}
+        />
+      ) : (
+        <TouchableOpacity style={styles.button} onPress={takePhoto}>
+          <Text style={styles.buttonText}>Tirar Foto</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -174,15 +185,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
   emptyText: {
     textAlign: "center",
     color: "#777",
     fontSize: 16,
   },
   paletteContainer: {
+    marginVertical: 20,
+  },
+  colorRow: {
     flexDirection: "row",
     justifyContent: "center",
-    marginVertical: 10,
   },
   colorBox: {
     width: 50,
