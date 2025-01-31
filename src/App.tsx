@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoginScreen from "./screens/loginScreen";
 import RegisterScreen from "./screens/registerScreen";
 import HomeScreen from "./screens/homeScreen";
+import HistoryScreen from "./screens/historyScreen";  // Importação da nova tela
 
 const Stack = createStackNavigator();
 
@@ -41,6 +42,16 @@ export default function App() {
             headerShown: true,
             title: "Home",
             headerStyle: { backgroundColor: "#6200ee" },
+            headerTintColor: "#fff",
+          }}
+        />
+        <Stack.Screen
+          name="HistoryScreen"
+          component={HistoryScreen}
+          options={{
+            headerShown: true,
+            title: "Histórico de Paletas",
+            headerStyle: { backgroundColor: "#00186C" },
             headerTintColor: "#fff",
           }}
         />

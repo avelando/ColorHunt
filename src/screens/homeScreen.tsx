@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   Alert,
   Image,
@@ -13,48 +12,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../config/firebaseConfig";
-import PaletteSelectionComponent from "../components/PaletteSelection";
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
-  const [palettes, setPalettes] = useState<string[][]>([]);
+  const [palettes, setPalettes] = useState<string[]>([]);
   const [image, setImage] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedPalette, setSelectedPalette] = useState<string[] | null>(null);
 
   useEffect(() => {
     const fetchToken = async () => {
       const savedToken = await AsyncStorage.getItem("userToken");
       setToken(savedToken);
     };
-  
     fetchToken();
   }, []);
-  
-  useEffect(() => {
-    if (token) {
-      fetchSavedPalette();
-    }
-  }, [token]);
-
-  const fetchSavedPalette = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("https://colorhunt-api.onrender.com/api/users/palette", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await response.json();
-      if (response.ok && data.palette) {
-        setSelectedPalette(data.palette);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar paleta salva:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const takePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -71,7 +42,6 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const photoUri = result.assets[0].uri;
       setImage(photoUri);
-
       uploadToFirebase(photoUri);
     }
   };
@@ -106,68 +76,51 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
         },
         body: JSON.stringify({ imageUrl }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
-        setPalettes(data.palettes || []);
+        setPalettes(data.palette || []);
+      } else {
+        Alert.alert("Erro", "Erro ao processar a paleta.");
       }
     } catch (error) {
       console.error("Erro ao enviar para API:", error);
     }
   };
 
-  const handlePaletteSelect = async (palette: string[]) => {
-    try {
-      const response = await fetch("https://colorhunt-api.onrender.com/api/users/palette", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ palette }),
-      });
-
-      if (response.ok) {
-        setSelectedPalette(palette);
-        setPalettes([]);
-        setImage(null);
-        Alert.alert("Paleta salva com sucesso!");
-      }
-    } catch (error) {
-      console.error("Erro ao salvar paleta:", error);
-    }
-  };
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Minhas Paletas</Text>
-
       {loading ? (
         <ActivityIndicator size="large" color="#6200ee" />
-      ) : selectedPalette ? (
-        <View style={styles.paletteContainer}>
-          <Text style={styles.subtitle}>Paleta Selecionada:</Text>
-          <View style={styles.colorRow}>
-            {selectedPalette.map((color, index) => (
-              <View key={index} style={[styles.colorBox, { backgroundColor: color }]} />
-            ))}
-          </View>
-        </View>
       ) : (
-        <Text style={styles.emptyText}>Nenhuma paleta selecionada.</Text>
-      )}
+        <>
+          {image && (
+            <Image source={{ uri: image }} style={styles.image} resizeMode="contain" />
+          )}
 
-      {image && palettes.length > 0 ? (
-        <PaletteSelectionComponent
-          image={image}
-          palettes={palettes}
-          onSelect={handlePaletteSelect}
-        />
-      ) : (
-        <TouchableOpacity style={styles.button} onPress={takePhoto}>
-          <Text style={styles.buttonText}>Tirar Foto</Text>
-        </TouchableOpacity>
+          {palettes.length > 0 && (
+            <View style={styles.paletteContainer}>
+              <Text style={styles.subtitle}>Paleta de Cores:</Text>
+              <View style={styles.colorRow}>
+                {palettes.map((color, index) => (
+                  <View key={index} style={[styles.colorBox, { backgroundColor: color }]} />
+                ))}
+              </View>
+            </View>
+          )}
+
+          <TouchableOpacity style={styles.button} onPress={takePhoto}>
+            <Text style={styles.buttonText}>Tirar Foto</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.historyButton]}
+            onPress={() => navigation.navigate("HistoryScreen")}
+          >
+            <Text style={styles.buttonText}>Ver Histórico</Text>
+          </TouchableOpacity>
+        </>
       )}
     </View>
   );
@@ -185,35 +138,41 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
+  image: {
+    width: "100%",
+    height: 250,
+    marginBottom: 20,
+    borderRadius: 10,
+  },
   subtitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
-  },
-  emptyText: {
     textAlign: "center",
-    color: "#777",
-    fontSize: 16,
   },
   paletteContainer: {
-    marginVertical: 20,
+    marginBottom: 20,
   },
   colorRow: {
     flexDirection: "row",
     justifyContent: "center",
+    flexWrap: "wrap",
   },
   colorBox: {
     width: 50,
     height: 50,
-    marginHorizontal: 5,
+    margin: 5,
     borderRadius: 5,
   },
   button: {
-    marginTop: 20,
     backgroundColor: "#6200ee",
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
+    marginBottom: 10,
+  },
+  historyButton: {
+    backgroundColor: "#00186C",
   },
   buttonText: {
     color: "#fff",
