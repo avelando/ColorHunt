@@ -1,13 +1,7 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import CustomInput from "../components/CustomInput";
+import { registerUser } from "../services/userServices";
 
 const RegisterScreen = ({ navigation }: { navigation: any }) => {
   const [name, setName] = useState("");
@@ -21,24 +15,11 @@ const RegisterScreen = ({ navigation }: { navigation: any }) => {
     }
 
     try {
-      const response = await fetch("https://colorhunt-api.onrender.com/api/users/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        Alert.alert("Sucesso", "Registro realizado com sucesso!");
-        navigation.navigate("Login");
-      } else {
-        Alert.alert("Erro", data.message || "Não foi possível registrar.");
-      }
-    } catch (error) {
-      Alert.alert("Erro", "Algo deu errado. Tente novamente.");
+      await registerUser(name, email, password);
+      Alert.alert("Sucesso", "Registro realizado com sucesso!");
+      navigation.navigate("Login");
+    } catch (error: any) {
+      Alert.alert("Erro", error.message || "Não foi possível registrar.");
     }
   };
 
@@ -68,10 +49,7 @@ const RegisterScreen = ({ navigation }: { navigation: any }) => {
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Registrar</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.loginLink}
-        onPress={() => navigation.navigate("Login")}
-      >
+      <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate("Login")}>
         <Text style={styles.loginText}>Já tem uma conta? Faça login</Text>
       </TouchableOpacity>
     </View>

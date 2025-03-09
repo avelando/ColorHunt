@@ -1,13 +1,8 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomInput from "../components/CustomInput";
+import { loginUser } from "../services/userServices";
 
 const LoginScreen = ({ navigation }: { navigation: any }) => {
   const [email, setEmail] = useState("");
@@ -20,26 +15,14 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
     }
 
     try {
-      const response = await fetch("https://colorhunt-api.onrender.com/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await loginUser(email, password);
+      await AsyncStorage.setItem("userToken", data.token);
+      await AsyncStorage.setItem("userId", data.userId.toString());
 
-      const data = await response.json();
-
-      if (response.ok) {
-        await AsyncStorage.setItem("userToken", data.token);
-
-        Alert.alert("Sucesso", "Login realizado!");
-        navigation.navigate("Home");
-      } else {
-        Alert.alert("Erro", data.message || "Credenciais inválidas.");
-      }
-    } catch (error) {
-      Alert.alert("Erro", "Algo deu errado. Tente novamente.");
+      Alert.alert("Sucesso", "Login realizado!");
+      navigation.navigate("Tabs", { screen: "Explorar" });
+    } catch (error: any) {
+      Alert.alert("Erro", error.message || "Credenciais inválidas.");
     }
   };
 

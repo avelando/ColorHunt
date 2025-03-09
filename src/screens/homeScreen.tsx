@@ -10,8 +10,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../config/firebaseConfig";
+import { uploadToCloudinary, uploadToAPI } from "../services/photoServices";
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
   const [palettes, setPalettes] = useState<string[]>([]);
@@ -42,50 +41,31 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const photoUri = result.assets[0].uri;
       setImage(photoUri);
-      uploadToFirebase(photoUri);
+      await handleUpload(photoUri);
     }
   };
 
-  const uploadToFirebase = async (imageUri: string) => {
+  const handleUpload = async (imageUri: string) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
-      const filename = `images/${Date.now()}.jpg`;
-      const imageRef = ref(storage, filename);
-
-      await uploadBytes(imageRef, blob);
-      const downloadUrl = await getDownloadURL(imageRef);
-
-      await uploadToAPI(downloadUrl);
-    } catch (error) {
-      Alert.alert("Erro", "Erro ao enviar a imagem.");
-      console.error("Erro no Firebase:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const uploadToAPI = async (imageUrl: string) => {
-    try {
-      const response = await fetch("https://colorhunt-api.onrender.com/api/photos", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ imageUrl }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setPalettes(data.palette || []);
-      } else {
-        Alert.alert("Erro", "Erro ao processar a paleta.");
+      const cloudinaryUrl = await uploadToCloudinary(imageUri);
+      if (cloudinaryUrl) {
+        if (!token) {
+          Alert.alert("Erro", "Usuário não autenticado. Faça login novamente.");
+          return;
+        }
+        const apiResponse = await uploadToAPI(cloudinaryUrl, token);
+        if (apiResponse && apiResponse.palette) {
+          setPalettes(apiResponse.palette);
+        } else {
+          console.error("❌ A API não retornou uma paleta de cores!");
+        }
       }
     } catch (error) {
-      console.error("Erro ao enviar para API:", error);
+      console.error("❌ Erro no processo de upload:", error);
+      Alert.alert("Erro", "Falha ao enviar imagem.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,10 +75,7 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
         <ActivityIndicator size="large" color="#6200ee" />
       ) : (
         <>
-          {image && (
-            <Image source={{ uri: image }} style={styles.image} resizeMode="contain" />
-          )}
-
+          {image && <Image source={{ uri: image }} style={styles.image} resizeMode="contain" />}
           {palettes.length > 0 && (
             <View style={styles.paletteContainer}>
               <Text style={styles.subtitle}>Paleta de Cores:</Text>
@@ -109,16 +86,8 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
               </View>
             </View>
           )}
-
           <TouchableOpacity style={styles.button} onPress={takePhoto}>
             <Text style={styles.buttonText}>Tirar Foto</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.historyButton]}
-            onPress={() => navigation.navigate("HistoryScreen")}
-          >
-            <Text style={styles.buttonText}>Ver Histórico</Text>
           </TouchableOpacity>
         </>
       )}
@@ -131,12 +100,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
     padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
   },
   image: {
     width: "100%",
@@ -170,9 +133,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
     marginBottom: 10,
-  },
-  historyButton: {
-    backgroundColor: "#00186C",
   },
   buttonText: {
     color: "#fff",
