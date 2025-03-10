@@ -1,15 +1,14 @@
-// src/screens/ProfileScreen.tsx
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
   ScrollView,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
@@ -21,8 +20,16 @@ import {
   getFollowing,
   deleteUserAccount,
 } from "../services/userServices";
-import { getUserPalettes, uploadProfilePhotoToCloudinary } from "../services/photoServices";
+import {
+  getUserPalettes,
+  uploadProfilePhotoToCloudinary,
+} from "../services/photoServices";
+import {
+  updateProfilePhotoService,
+  deleteUserAccountService,
+} from "../services/profileServices";
 import { API_BASE_URL } from "@env";
+import CustomButton from "../components/CustomButton";
 
 const DEFAULT_AVATAR =
   "https://cdn-icons-png.flaticon.com/512/847/847969.png";
@@ -43,7 +50,6 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
     email: "",
     profilePhoto: null,
   });
-  // Guarda os dados originais para comparação
   const [originalUser, setOriginalUser] = useState<UserData>({
     id: 0,
     name: "",
@@ -51,7 +57,6 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
     email: "",
     profilePhoto: null,
   });
-
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [palettesCount, setPalettesCount] = useState(0);
@@ -92,7 +97,6 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
     fetchData();
   }, []);
 
-  // Compara os dados atuais com os originais
   useEffect(() => {
     if (
       user.name !== originalUser.name ||
@@ -105,7 +109,6 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
     }
   }, [user, originalUser]);
 
-  // Define o botão "Salvar" no header somente se houver modificação
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () =>
@@ -143,7 +146,12 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
   };
 
   const navigateToScreen = (screen: string) => {
-    navigation.navigate(screen, { userId: user.id });
+    // Se o usuário clicar em "MyPalettes", redirecione para "Minhas Paletas"
+    if (screen === "MyPalettes") {
+      navigation.navigate("Minhas Paletas", { userId: user.id });
+    } else {
+      navigation.navigate(screen, { userId: user.id });
+    }
   };
 
   const handleLogout = async () => {
@@ -258,7 +266,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
           onPress: async () => {
             try {
               setUpdating(true);
-              await deleteUserAccount();
+              await deleteUserAccountService();
               Alert.alert("Conta Deletada", "Sua conta foi deletada com sucesso.");
               await AsyncStorage.removeItem("userToken");
               await AsyncStorage.removeItem("userId");
@@ -284,7 +292,9 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
   }
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { justifyContent: "space-between" }]}>
+    <ScrollView
+      contentContainerStyle={[styles.container, { justifyContent: "space-between" }]}
+    >
       {updating && (
         <View style={styles.updatingOverlay}>
           <ActivityIndicator size="large" color="#fff" />
@@ -359,12 +369,8 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
 
       {/* Botões de Ação na Parte Inferior */}
       <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
-          <Text style={styles.deleteButtonText}>Deletar Conta</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
+        <CustomButton title="Deletar Conta" filled={false} onPress={handleDeleteAccount} />
+        <CustomButton title="Logout" onPress={handleLogout} />
       </View>
     </ScrollView>
   );
@@ -372,9 +378,9 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: "#fff",
     flexGrow: 1,
+    padding: 10,
+    backgroundColor: "#f5f5f5",
   },
   center: {
     justifyContent: "center",
@@ -432,6 +438,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     fontSize: 16,
+    backgroundColor: "#fff",
   },
   statsContainer: {
     flexDirection: "row",
@@ -453,31 +460,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     marginVertical: 20,
-  },
-  logoutButton: {
-    backgroundColor: "#d9534f",
-    padding: 15,
-    borderRadius: 5,
-    width: "40%",
-    alignItems: "center",
-  },
-  logoutButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  deleteButton: {
-    borderColor: "#d9534f",
-    borderWidth: 2,
-    padding: 15,
-    borderRadius: 5,
-    width: "40%",
-    alignItems: "center",
-  },
-  deleteButtonText: {
-    color: "#d9534f",
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });
 

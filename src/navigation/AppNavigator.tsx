@@ -8,6 +8,8 @@ import TabNavigator from "./TabNavigator";
 import CreatePaletteScreen from "../screens/createPaletteScreen";
 import { RootStackParamList } from "../types/types";
 import { getUser } from "../services/userServices";
+import FollowersScreen from "../screens/followersScreen";
+import FollowingScreen from "../screens/followingScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -53,6 +55,8 @@ const AppNavigator = () => {
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
       <Stack.Screen name="CreatePalette" component={CreatePaletteScreen} />
+      <Stack.Screen name="Followers" component={FollowersScreen} />
+      <Stack.Screen name="Following" component={FollowingScreen} />
     </Stack.Navigator>
   );
 };
