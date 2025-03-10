@@ -5,17 +5,18 @@ import { registerUser } from "../services/userServices";
 
 const RegisterScreen = ({ navigation }: { navigation: any }) => {
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
+    if (!name || !username || !email || !password) {
       Alert.alert("Erro", "Preencha todos os campos!");
       return;
     }
 
     try {
-      await registerUser(name, email, password);
+      await registerUser(name, username, email, password);
       Alert.alert("Sucesso", "Registro realizado com sucesso!");
       navigation.navigate("Login");
     } catch (error: any) {
@@ -31,6 +32,12 @@ const RegisterScreen = ({ navigation }: { navigation: any }) => {
         placeholder="Digite seu nome"
         value={name}
         onChangeText={setName}
+      />
+      <CustomInput
+        label="Username"
+        placeholder="Digite seu username"
+        value={username}
+        onChangeText={setUsername}
       />
       <CustomInput
         label="Email"
@@ -49,7 +56,10 @@ const RegisterScreen = ({ navigation }: { navigation: any }) => {
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Registrar</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate("Login")}>
+      <TouchableOpacity
+        style={styles.loginLink}
+        onPress={() => navigation.navigate("Login")}
+      >
         <Text style={styles.loginText}>Já tem uma conta? Faça login</Text>
       </TouchableOpacity>
     </View>

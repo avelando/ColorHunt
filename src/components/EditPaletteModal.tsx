@@ -12,6 +12,8 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Photo } from "../interface/PhotoProps"; // Certifique-se de que esses tipos estão definidos corretamente
+import { Color } from "../interface/ColorProps";
 
 // Lista de cores pré-definidas para escolha
 const predefinedColors = [
@@ -42,9 +44,8 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({
 }) => {
   const [title, setTitle] = useState(palette.title || "");
   const [isPublic, setIsPublic] = useState(palette.isPublic);
-  const [colors, setColors] = useState(
-    palette.colors.map((c) => ({ id: c.id, hex: c.hex }))
-  );
+  // Inicializa o estado com um array, usando palette.colors ou [] como fallback
+  const [colors, setColors] = useState<Color[]>(palette.colors || []);
   // Para saber qual linha de cor está sendo editada via picker
   const [selectedColorRowIndex, setSelectedColorRowIndex] = useState<number | null>(null);
 
@@ -52,29 +53,24 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({
   useEffect(() => {
     setTitle(palette.title || "");
     setIsPublic(palette.isPublic);
-    setColors(palette.colors.map((c) => ({ id: c.id, hex: c.hex })));
+    setColors(palette.colors || []);
     setSelectedColorRowIndex(null);
   }, [palette]);
 
   const handleColorChange = (index: number, newHex: string) => {
     const newColors = [...colors];
-    newColors[index].hex = newHex;
+    newColors[index] = { ...newColors[index], hex: newHex };
     setColors(newColors);
   };
 
   const handleSave = async () => {
     try {
-      // Aqui você chamaria os endpoints para atualizar a paleta e cada cor, se necessário.
-      // Por exemplo:
-      // await updatePalette(palette.id, title, isPublic);
-      // for (const color of colors) {
-      //   if (color.id) await updateColor(color.id, color.hex);
-      // }
       const updatedPalette: Photo = {
         ...palette,
         title,
         isPublic,
-        colors: colors.map((c) => ({ hex: c.hex })),
+        // Passa os objetos completos, mantendo todas as propriedades (como paletteId e originImageUrl)
+        colors: colors,
       };
       onUpdate(updatedPalette);
       onClose();
@@ -97,7 +93,7 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({
   return (
     <Modal
       visible={visible}
-      animationType="fade" // animação mais suave
+      animationType="fade"
       transparent
       onRequestClose={onClose}
     >
@@ -137,16 +133,12 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({
                   value={color.hex}
                   onChangeText={(newHex) => handleColorChange(index, newHex)}
                 />
-                {/* Se esta linha estiver selecionada, mostra o picker */}
                 {selectedColorRowIndex === index && (
                   <View style={styles.pickerContainer}>
                     {predefinedColors.map((predef, idx) => (
                       <TouchableOpacity
                         key={idx}
-                        style={[
-                          styles.swatch,
-                          { backgroundColor: predef },
-                        ]}
+                        style={[styles.swatch, { backgroundColor: predef }]}
                         onPress={() => {
                           handleColorChange(index, predef);
                           setSelectedColorRowIndex(null);
@@ -159,10 +151,7 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({
             ))}
           </ScrollView>
           <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={handleDelete}
-            >
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
               <Ionicons name="trash" size={20} color="#fff" />
               <Text style={styles.buttonText}>Deletar</Text>
             </TouchableOpacity>

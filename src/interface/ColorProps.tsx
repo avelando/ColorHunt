@@ -1,4 +1,6 @@
-interface Color {
-  id?: number;
+export interface Color {
+  id: number;
   hex: string;
+  paletteId: number;
+  originImageUrl: string;
 }

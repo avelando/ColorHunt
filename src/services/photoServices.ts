@@ -1,6 +1,10 @@
 import { CLOUDINARY_API_URL, CLOUDINARY_UPLOAD_PRESET, API_BASE_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Palette } from "../interface/PaletteProps";
+import { Photo } from "../interface/PhotoProps";
+import { Color } from "../interface/ColorProps";
 
+// ======================== UPLOAD PARA CLOUDINARY ========================
 export const uploadToCloudinary = async (imageUri: string): Promise<string | null> => {
   try {
     const formData = new FormData();
@@ -29,6 +33,7 @@ export const uploadToCloudinary = async (imageUri: string): Promise<string | nul
   }
 };
 
+// ======================== UPLOAD PARA API ========================
 export const uploadToAPI = async (imageUrl: string, token: string): Promise<any> => {
   try {
     const response = await fetch(`${API_BASE_URL}/photos/upload`, {
@@ -54,6 +59,7 @@ export const uploadToAPI = async (imageUrl: string, token: string): Promise<any>
   }
 };
 
+// ======================== FETCH FOTOS DO USUÁRIO ========================
 export const fetchUserPhotos = async (): Promise<Photo[]> => {
   try {
     const token = await AsyncStorage.getItem("userToken");
@@ -76,15 +82,22 @@ export const fetchUserPhotos = async (): Promise<Photo[]> => {
 
     const data = await response.json();
     console.log("Fotos recebidas:", data);
-    return data.photos;
+    return data.photos as Photo[];
   } catch (error) {
     console.error("Erro na requisição:", error);
     throw error;
   }
 };
 
-export const updatePalette = async (photoId: number, title: string, isPublic: boolean): Promise<Photo> => {
+// ======================== UPDATE PALETA ========================
+export const updatePalette = async (
+  photoId: number,
+  title: string,
+  isPublic: boolean
+): Promise<Photo> => {
   const token = await AsyncStorage.getItem("userToken");
+  if (!token) throw new Error("Token não encontrado.");
+  
   const response = await fetch(`${API_BASE_URL}/photos/${photoId}`, {
     method: "PATCH",
     headers: {
@@ -97,11 +110,14 @@ export const updatePalette = async (photoId: number, title: string, isPublic: bo
     const errorText = await response.text();
     throw new Error(errorText);
   }
-  return await response.json();
+  return (await response.json()) as Photo;
 };
 
+// ======================== UPDATE COR ========================
 export const updateColor = async (colorId: number, hex: string): Promise<Color> => {
   const token = await AsyncStorage.getItem("userToken");
+  if (!token) throw new Error("Token não encontrado.");
+
   const response = await fetch(`${API_BASE_URL}/colors/${colorId}`, {
     method: "PATCH",
     headers: {
@@ -114,11 +130,14 @@ export const updateColor = async (colorId: number, hex: string): Promise<Color> 
     const errorText = await response.text();
     throw new Error(errorText);
   }
-  return await response.json();
+  return (await response.json()) as Color;
 };
 
+// ======================== DELETE PALETA ========================
 export const deletePalette = async (photoId: number): Promise<void> => {
   const token = await AsyncStorage.getItem("userToken");
+  if (!token) throw new Error("Token não encontrado.");
+
   const response = await fetch(`${API_BASE_URL}/photos/${photoId}`, {
     method: "DELETE",
     headers: {
@@ -129,5 +148,35 @@ export const deletePalette = async (photoId: number): Promise<void> => {
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText);
+  }
+};
+
+// ======================== GET PALETAS DO USUÁRIO ========================
+export const getUserPalettes = async (): Promise<Palette[]> => {
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      throw new Error("Token não encontrado. Faça login novamente.");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/palettes/user`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Erro ao buscar paletas:", errorText);
+      throw new Error(`Erro ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log("Paletas recebidas:", data);
+    return data.palettes as Palette[];
+  } catch (error) {
+    console.error("Erro na requisição:", error);
+    throw error;
   }
 };

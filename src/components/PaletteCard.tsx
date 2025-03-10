@@ -1,19 +1,20 @@
+// src/components/PaletteCard.tsx
 import React from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
-interface PaletteCardProps {
-  photo: Photo;
-}
+import { PaletteCardProps } from "../interface/PaletteCardProps";
 
 const PaletteCard: React.FC<PaletteCardProps> = ({ photo }) => {
+  // Se photo.palette existir, use seu array de cores; caso contrário, tente photo.colors (ou [] se nenhum existir)
+  const colors = photo.palette?.colors || photo.colors || [];
+
   return (
     <View style={styles.card}>
       <Image source={{ uri: photo.imageUrl }} style={styles.photo} />
       <View style={styles.cardContent}>
         <Text style={styles.title}>{photo.title || "Sem Título"}</Text>
         <View style={styles.paletteRow}>
-          {photo.colors.map((colorObj, index) => (
+          {colors.map((colorObj, index) => (
             <View
               key={index}
               style={[styles.colorBox, { backgroundColor: colorObj.hex }]}
