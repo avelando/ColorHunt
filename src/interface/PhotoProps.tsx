@@ -1,4 +1,5 @@
 import { Color } from "./ColorProps";
+
 export interface Photo {
   id: number;
   imageUrl: string;

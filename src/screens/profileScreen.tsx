@@ -37,19 +37,15 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
       }
       const userId = parseInt(storedUserId, 10);
 
-      // Busca dados do usuário
       const userData = await getUser();
       setUser({ ...userData });
 
-      // Busca seguidores
       const followers = await getFollowers(userId);
       setFollowersCount(followers.length);
 
-      // Busca seguindo
       const following = await getFollowing(userId);
       setFollowingCount(following.length);
 
-      // Busca paletas do usuário
       const palettesRes = await getUserPalettes();
       setPalettesCount(palettesRes.length);
     } catch (error: any) {
@@ -64,7 +60,6 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
     fetchData();
   }, []);
 
-  // Configura o botão "Salvar" no header se houver modificações
   useLayoutEffect(() => {
     if (modified) {
       navigation.setOptions({
@@ -86,14 +81,12 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
     }
     try {
       setUpdating(true);
-      // Cria objeto para atualizar sem senha
       const dataToUpdate = {
         name: user.name,
         username: user.username,
         email: user.email,
       };
       const updated = await updateUser(dataToUpdate);
-      // Atualiza o estado com os dados retornados
       setUser({ ...updated.updatedUser });
       Alert.alert("Sucesso", "Perfil atualizado com sucesso");
       setModified(false);
@@ -130,7 +123,6 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Campos de edição */}
       <View style={styles.fieldContainer}>
         <Text style={styles.label}>Nome:</Text>
         <TextInput
@@ -181,7 +173,6 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Botão de Logout centralizado na parte inferior */}
       <View style={styles.logoutContainer}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Logout</Text>
@@ -206,7 +197,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   headerButtonText: {
-    color: "#007BFF", // Botão "Salvar" em azul
+    color: "#007BFF",
     fontSize: 16,
     fontWeight: "bold",
   },

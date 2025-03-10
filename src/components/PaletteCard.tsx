@@ -1,11 +1,9 @@
-// src/components/PaletteCard.tsx
 import React from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { PaletteCardProps } from "../interface/PaletteCardProps";
 
 const PaletteCard: React.FC<PaletteCardProps> = ({ photo }) => {
-  // Se photo.palette existir, use seu array de cores; caso contrário, tente photo.colors (ou [] se nenhum existir)
   const colors = photo.palette?.colors || photo.colors || [];
 
   return (

@@ -4,7 +4,6 @@ import { Palette } from "../interface/PaletteProps";
 import { Photo } from "../interface/PhotoProps";
 import { Color } from "../interface/ColorProps";
 
-// ======================== UPLOAD PARA CLOUDINARY ========================
 export const uploadToCloudinary = async (imageUri: string): Promise<string | null> => {
   try {
     const formData = new FormData();
@@ -33,7 +32,6 @@ export const uploadToCloudinary = async (imageUri: string): Promise<string | nul
   }
 };
 
-// ======================== UPLOAD PARA API ========================
 export const uploadToAPI = async (imageUrl: string, token: string): Promise<any> => {
   try {
     const response = await fetch(`${API_BASE_URL}/photos/upload`, {
@@ -59,7 +57,6 @@ export const uploadToAPI = async (imageUrl: string, token: string): Promise<any>
   }
 };
 
-// ======================== FETCH FOTOS DO USUÁRIO ========================
 export const fetchUserPhotos = async (): Promise<Photo[]> => {
   try {
     const token = await AsyncStorage.getItem("userToken");
@@ -89,7 +86,6 @@ export const fetchUserPhotos = async (): Promise<Photo[]> => {
   }
 };
 
-// ======================== UPDATE PALETA ========================
 export const updatePalette = async (
   photoId: number,
   title: string,
@@ -113,7 +109,6 @@ export const updatePalette = async (
   return (await response.json()) as Photo;
 };
 
-// ======================== UPDATE COR ========================
 export const updateColor = async (colorId: number, hex: string): Promise<Color> => {
   const token = await AsyncStorage.getItem("userToken");
   if (!token) throw new Error("Token não encontrado.");
@@ -133,7 +128,6 @@ export const updateColor = async (colorId: number, hex: string): Promise<Color> 
   return (await response.json()) as Color;
 };
 
-// ======================== DELETE PALETA ========================
 export const deletePalette = async (photoId: number): Promise<void> => {
   const token = await AsyncStorage.getItem("userToken");
   if (!token) throw new Error("Token não encontrado.");
@@ -151,7 +145,6 @@ export const deletePalette = async (photoId: number): Promise<void> => {
   }
 };
 
-// ======================== GET PALETAS DO USUÁRIO ========================
 export const getUserPalettes = async (): Promise<Palette[]> => {
   try {
     const token = await AsyncStorage.getItem("userToken");

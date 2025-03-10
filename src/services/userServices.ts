@@ -1,7 +1,6 @@
 import { API_BASE_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// ========================= LOGIN & REGISTER =========================
 export const loginUser = async (email: string, password: string) => {
   try {
     const response = await fetch(`${API_BASE_URL}/login`, {
@@ -65,7 +64,6 @@ export const registerUser = async (
   }
 };
 
-// ========================= Função Auxiliar =========================
 const processResponse = async (response: Response) => {
   const contentType = response.headers.get("content-type");
   let data;
@@ -82,7 +80,6 @@ const processResponse = async (response: Response) => {
   }
 };
 
-// ========================= GET USER =========================
 export const getUser = async () => {
   try {
     const token = await AsyncStorage.getItem("userToken");
@@ -103,7 +100,6 @@ export const getUser = async () => {
   }
 };
 
-// ========================= UPDATE USER =========================
 export const updateUser = async (userData: {
   name?: string;
   username?: string;
@@ -130,7 +126,6 @@ export const updateUser = async (userData: {
   }
 };
 
-// ========================= GET FOLLOWERS =========================
 export const getFollowers = async (userId: number) => {
   try {
     const token = await AsyncStorage.getItem("userToken");
@@ -151,7 +146,6 @@ export const getFollowers = async (userId: number) => {
   }
 };
 
-// ========================= GET FOLLOWING =========================
 export const getFollowing = async (userId: number) => {
   try {
     const token = await AsyncStorage.getItem("userToken");

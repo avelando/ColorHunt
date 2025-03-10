@@ -53,7 +53,6 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     }
   };
 
-  // Mostra opções para adicionar foto
   const showImageOptions = () => {
     Alert.alert(
       "Adicionar Foto",
@@ -79,7 +78,6 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const photoUri = result.assets[0].uri;
-      // Faz o upload para o Cloudinary e navega com a URL segura
       const secureUrl = await uploadToCloudinary(photoUri);
       if (secureUrl) {
         navigation.navigate("CreatePalette", { imageUri: secureUrl });

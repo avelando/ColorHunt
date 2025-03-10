@@ -1,4 +1,3 @@
-// src/screens/CreatePaletteScreen.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -13,9 +12,8 @@ import {
 import { StackScreenProps } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "../types/types";
-import { API_BASE_URL } from "@env"; // ajuste conforme sua configuração
+import { API_BASE_URL } from "@env";
 
-// Definindo o tipo para cada cor (como registrado no banco de dados)
 type ColorItem = {
   id: number;
   hex: string;
@@ -33,17 +31,12 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
   const { imageUri } = route.params;
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
-  // Fase "initial": antes de gerar a paleta; "generated": após receber do back-end
   const [phase, setPhase] = useState<"initial" | "generated">("initial");
-  // Armazena o ID da paleta criada (retornado pelo back-end)
   const [paletteId, setPaletteId] = useState<number | null>(null);
-  // Armazena as cores geradas (como array de objetos com id e hex)
   const [colors, setColors] = useState<ColorItem[]>([]);
-  // Controle para edição inline de uma cor
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState("");
 
-  // Fase 1: Geração da paleta
   const handleGeneratePalette = async () => {
     if (!title.trim()) {
       Alert.alert("Atenção", "Informe um título para a paleta.");
@@ -67,7 +60,6 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
       });
       const data = await response.json();
       if (response.ok) {
-        // Supondo que data.palette.colors seja um array de objetos com { id, hex }
         setPaletteId(data.palette.id);
         setColors(data.palette.colors);
         setPhase("generated");
@@ -82,13 +74,11 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
     }
   };
 
-  // Edição de uma cor: quando o usuário toca em uma cor, ativa o modo de edição
   const handleColorPress = (index: number) => {
     setEditingIndex(index);
     setEditingValue(colors[index].hex);
   };
 
-  // Salva a alteração de uma cor e encerra o modo de edição
   const handleSaveColorEdit = () => {
     if (editingIndex !== null) {
       const newColors = [...colors];
@@ -99,7 +89,6 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
     }
   };
 
-  // Fase 2: Salva as alterações finais (título e cores editadas)
   const handleSavePalette = async () => {
     setLoading(true);
     try {
@@ -109,7 +98,6 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
         setLoading(false);
         return;
       }
-      // Atualiza o título e a visibilidade da paleta
       const updatePaletteResponse = await fetch(
         `${API_BASE_URL}/palettes/${paletteId}`,
         {
@@ -127,7 +115,6 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
         setLoading(false);
         return;
       }
-      // Para cada cor, chama o endpoint de atualização
       for (const color of colors) {
         const updateColorResponse = await fetch(
           `${API_BASE_URL}/colors/${color.id}`,

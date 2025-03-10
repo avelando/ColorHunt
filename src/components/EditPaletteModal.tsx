@@ -1,4 +1,3 @@
-// src/components/EditPaletteModal.tsx
 import React, { useState, useEffect } from "react";
 import {
   Modal,
@@ -12,10 +11,9 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Photo } from "../interface/PhotoProps"; // Certifique-se de que esses tipos estão definidos corretamente
+import { Photo } from "../interface/PhotoProps";
 import { Color } from "../interface/ColorProps";
 
-// Lista de cores pré-definidas para escolha
 const predefinedColors = [
   "#FF0000",
   "#00FF00",
@@ -44,12 +42,9 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({
 }) => {
   const [title, setTitle] = useState(palette.title || "");
   const [isPublic, setIsPublic] = useState(palette.isPublic);
-  // Inicializa o estado com um array, usando palette.colors ou [] como fallback
   const [colors, setColors] = useState<Color[]>(palette.colors || []);
-  // Para saber qual linha de cor está sendo editada via picker
   const [selectedColorRowIndex, setSelectedColorRowIndex] = useState<number | null>(null);
 
-  // Atualiza o estado interno quando a paleta selecionada muda
   useEffect(() => {
     setTitle(palette.title || "");
     setIsPublic(palette.isPublic);
@@ -69,7 +64,6 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({
         ...palette,
         title,
         isPublic,
-        // Passa os objetos completos, mantendo todas as propriedades (como paletteId e originImageUrl)
         colors: colors,
       };
       onUpdate(updatedPalette);
