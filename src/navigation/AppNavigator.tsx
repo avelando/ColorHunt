@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, View } from "react-native";
@@ -7,6 +7,7 @@ import RegisterScreen from "../screens/registerScreen";
 import TabNavigator from "./TabNavigator";
 import CreatePaletteScreen from "../screens/createPaletteScreen";
 import { RootStackParamList } from "../types/types";
+import { getUser } from "../services/userServices";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -16,7 +17,18 @@ const AppNavigator = () => {
 
   const checkUserToken = async () => {
     const token = await AsyncStorage.getItem("userToken");
-    setIsAuthenticated(!!token);
+    if (token) {
+      try {
+        await getUser();
+        setIsAuthenticated(true);
+      } catch (error) {
+        await AsyncStorage.removeItem("userToken");
+        await AsyncStorage.removeItem("userId");
+        setIsAuthenticated(false);
+      }
+    } else {
+      setIsAuthenticated(false);
+    }
     setLoading(false);
   };
 

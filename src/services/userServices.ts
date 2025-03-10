@@ -165,3 +165,22 @@ export const getFollowing = async (userId: number) => {
     throw error;
   }
 };
+
+export const deleteUserAccount = async (): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      throw new Error("Token não encontrado. Faça login novamente.");
+    }
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await processResponse(response);
+  } catch (error) {
+    throw error;
+  }
+};

@@ -1,4 +1,4 @@
-import { CLOUDINARY_API_URL, CLOUDINARY_UPLOAD_PRESET, API_BASE_URL } from "@env";
+import { CLOUDINARY_API_URL, CLOUDINARY_UPLOAD_PRESET, API_BASE_URL, PROFILE_UPLOAD_PRESET } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Palette } from "../interface/PaletteProps";
 import { Photo } from "../interface/PhotoProps";
@@ -171,5 +171,33 @@ export const getUserPalettes = async (): Promise<Palette[]> => {
   } catch (error) {
     console.error("Erro na requisição:", error);
     throw error;
+  }
+};
+
+export const uploadProfilePhotoToCloudinary = async (imageUri: string): Promise<string | null> => {
+  try {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "profile.jpg",
+    } as any);
+    formData.append("upload_preset", PROFILE_UPLOAD_PRESET);
+
+    const response = await fetch(CLOUDINARY_API_URL, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (response.ok && data.secure_url) {
+      console.log("✅ Profile photo uploaded to Cloudinary:", data.secure_url);
+      return data.secure_url;
+    } else {
+      throw new Error("Error uploading profile photo to Cloudinary");
+    }
+  } catch (error) {
+    console.error("❌ Error in uploadProfilePhotoToCloudinary:", error);
+    return null;
   }
 };
