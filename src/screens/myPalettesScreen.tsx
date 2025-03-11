@@ -13,6 +13,8 @@ import { fetchUserPhotos, uploadToCloudinary } from "../services/photoServices";
 import { Photo } from "../interface/PhotoProps";
 import PaletteCard from "../components/PaletteCard";
 import EditPaletteModal from "../components/EditPaletteModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_BASE_URL } from "@env";
 
 const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -24,14 +26,20 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     const loadPhotos = async () => {
       try {
         const photosData = await fetchUserPhotos();
-        setPhotos(photosData);
+  
+        setPhotos(
+          photosData.map((photo) => ({
+            ...photo,
+            title: photo.palette?.title || "Paleta sem título",
+          }))
+        );
       } catch (error) {
         console.error("Erro ao carregar fotos:", error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     loadPhotos();
   }, []);
 
@@ -80,10 +88,44 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
       const photoUri = result.assets[0].uri;
       const secureUrl = await uploadToCloudinary(photoUri);
       if (secureUrl) {
-        navigation.navigate("CreatePalette", { imageUri: secureUrl });
+        const generatedPalette = await generatePalette(secureUrl);
+        if (generatedPalette) {
+          navigation.navigate("CreatePalette", { imageUri: secureUrl, palette: generatedPalette });
+        } else {
+          Alert.alert("Erro", "Não foi possível gerar a paleta.");
+        }
       } else {
         Alert.alert("Erro", "Não foi possível enviar a imagem para o Cloudinary.");
       }
+    }
+  };
+
+  const generatePalette = async (imageUrl: string) => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        Alert.alert("Erro", "Token não encontrado. Faça login novamente.");
+        return null;
+      }
+      const response = await fetch(`${API_BASE_URL}/palettes/upload`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageUrl, title: "Default Title", isPublic: true }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        return data.palette;
+      } else {
+        Alert.alert("Erro", data.error || "Erro ao gerar a paleta.");
+        return null;
+      }
+    } catch (error) {
+      console.error("Erro ao gerar a paleta:", error);
+      Alert.alert("Erro", "Erro de comunicação com o servidor.");
+      return null;
     }
   };
 

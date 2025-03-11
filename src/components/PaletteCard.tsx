@@ -10,7 +10,11 @@ const PaletteCard: React.FC<PaletteCardProps> = ({ photo }) => {
     <View style={styles.card}>
       <Image source={{ uri: photo.imageUrl }} style={styles.photo} />
       <View style={styles.cardContent}>
-        <Text style={styles.title}>{photo.title || "Sem Título"}</Text>
+      <Text style={styles.title}>
+      {photo.palette?.title && photo.palette.title.trim() !== "" 
+      ? photo.palette.title 
+      : "Paleta sem título"}
+      </Text>
         <View style={styles.paletteRow}>
           {colors.map((colorObj, index) => (
             <View
@@ -23,10 +27,10 @@ const PaletteCard: React.FC<PaletteCardProps> = ({ photo }) => {
           <Ionicons
             name="lock-closed"
             size={20}
-            color={photo.isPublic ? "green" : "red"}
+            color={photo.palette?.isPublic ? "green" : "red"}
           />
           <Text style={styles.statusText}>
-            {photo.isPublic ? "Pública" : "Privada"}
+            {photo.palette?.isPublic ? "Pública" : "Privada"}
           </Text>
         </View>
       </View>

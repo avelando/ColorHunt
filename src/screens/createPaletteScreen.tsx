@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,11 +8,14 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { StackScreenProps } from "@react-navigation/stack";
+import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "../types/types";
 import { API_BASE_URL } from "@env";
+import { uploadPalette } from "../services/paletteServices";
 
 type ColorItem = {
   id: number;
@@ -36,41 +39,28 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
   const [colors, setColors] = useState<ColorItem[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState("");
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [exitModalVisible, setExitModalVisible] = useState(false);
 
-  const handleGeneratePalette = async () => {
-    if (!title.trim()) {
-      Alert.alert("Atenção", "Informe um título para a paleta.");
-      return;
+  useEffect(() => {
+    if (imageUri) {
+      generatePalette();
     }
+  }, [imageUri]);
+
+  const generatePalette = async () => {
     setLoading(true);
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        Alert.alert("Erro", "Token não encontrado. Faça login novamente.");
-        setLoading(false);
-        return;
-      }
-      const response = await fetch(`${API_BASE_URL}/palettes/upload`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ imageUrl: imageUri, title, isPublic: true }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setPaletteId(data.palette.id);
-        setColors(data.palette.colors);
-        setPhase("generated");
-      } else {
-        Alert.alert("Erro", data.error || "Erro ao gerar a paleta.");
-      }
-    } catch (error) {
-      console.error("Erro ao gerar a paleta:", error);
-      Alert.alert("Erro", "Erro de comunicação com o servidor.");
-    } finally {
-      setLoading(false);
+    const titulo = "Título qualquer";
+    const result = await uploadPalette(imageUri, titulo);
+    setLoading(false);
+
+    if (result.error) {
+      Alert.alert("Erro", result.error);
+    } else {
+      setPaletteId(result.paletteId!);
+      setColors(result.colors!);
+      setPhase("generated");
+      setUnsavedChanges(true); // 🔥 Marca como alterado
     }
   };
 
@@ -86,6 +76,7 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
       setColors(newColors);
       setEditingIndex(null);
       setEditingValue("");
+      setUnsavedChanges(true); // 🔥 Marca como alterado
     }
   };
 
@@ -116,22 +107,17 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
         return;
       }
       for (const color of colors) {
-        const updateColorResponse = await fetch(
-          `${API_BASE_URL}/colors/${color.id}`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ hex: color.hex }),
-          }
-        );
-        if (!updateColorResponse.ok) {
-          console.error("Erro ao atualizar cor:", color.id);
-        }
+        await fetch(`${API_BASE_URL}/colors/${color.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ hex: color.hex }),
+        });
       }
       Alert.alert("Sucesso", "Paleta atualizada com sucesso!");
+      setUnsavedChanges(false); // 🔥 Reseta flag de alterações
       navigation.goBack();
     } catch (error) {
       console.error("Erro ao salvar paleta:", error);
@@ -140,6 +126,42 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
       setLoading(false);
     }
   };
+
+  const handleDiscardPalette = async () => {
+    if (paletteId) {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) return;
+
+        await fetch(`${API_BASE_URL}/palettes/${paletteId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (error) {
+        console.error("Erro ao excluir paleta:", error);
+      }
+    }
+    setExitModalVisible(false);
+    navigation.goBack();
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const handleBeforeRemove = (e: any) => {
+        if (!unsavedChanges) return;
+        e.preventDefault();
+        setExitModalVisible(true);
+      };
+
+      navigation.addListener("beforeRemove", handleBeforeRemove);
+      return () => {
+        navigation.removeListener("beforeRemove", handleBeforeRemove);
+      };
+    }, [unsavedChanges])
+  );
 
   return (
     <View style={styles.container}>
@@ -151,58 +173,51 @@ const CreatePaletteScreen: React.FC<CreatePaletteScreenProps> = ({
         value={title}
         onChangeText={setTitle}
       />
-      {phase === "initial" ? (
-        <>
-          {loading ? (
-            <ActivityIndicator size="large" color="#6200ee" />
-          ) : (
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleGeneratePalette}
-            >
-              <Text style={styles.saveButtonText}>Gerar Paleta</Text>
-            </TouchableOpacity>
-          )}
-        </>
+      <Text style={styles.subHeading}>Paleta Gerada:</Text>
+      <View style={styles.colorsContainer}>
+        {colors.map((color, index) => (
+          <TouchableOpacity key={color.id} onPress={() => handleColorPress(index)}>
+            {editingIndex === index ? (
+              <TextInput
+                style={[styles.colorBox, { backgroundColor: color.hex }]}
+                value={editingValue}
+                onChangeText={setEditingValue}
+                onBlur={handleSaveColorEdit}
+                autoFocus
+              />
+            ) : (
+              <View style={[styles.colorBox, { backgroundColor: color.hex }]}>
+                <Text style={styles.colorText}>{color.hex}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#6200ee" />
       ) : (
-        <>
-          <Text style={styles.subHeading}>Paleta Gerada:</Text>
-          <View style={styles.colorsContainer}>
-            {colors.map((color, index) => (
-              <TouchableOpacity
-                key={color.id}
-                onPress={() => handleColorPress(index)}
-              >
-                {editingIndex === index ? (
-                  <TextInput
-                    style={[styles.colorBox, { backgroundColor: color.hex }]}
-                    value={editingValue}
-                    onChangeText={setEditingValue}
-                    onBlur={handleSaveColorEdit}
-                    autoFocus
-                  />
-                ) : (
-                  <View
-                    style={[styles.colorBox, { backgroundColor: color.hex }]}
-                  >
-                    <Text style={styles.colorText}>{color.hex}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-          {loading ? (
-            <ActivityIndicator size="large" color="#6200ee" />
-          ) : (
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSavePalette}
-            >
-              <Text style={styles.saveButtonText}>Salvar Alterações</Text>
-            </TouchableOpacity>
-          )}
-        </>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSavePalette}>
+          <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+        </TouchableOpacity>
       )}
+      <Modal visible={exitModalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>Deseja sair sem salvar a paleta?</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setExitModalVisible(false)}
+              >
+                <Text>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={handleDiscardPalette}>
+                <Text style={{ color: "red" }}>Sair sem salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -264,6 +279,43 @@ const styles = StyleSheet.create({
   colorText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Fundo escuro semi-transparente
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    elevation: 5, // Sombra no Android
+    shadowColor: "#000", // Sombra no iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+  },
+  modalButton: {
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "40%",
+    backgroundColor: "#f0f0f0",
   },
 });
 

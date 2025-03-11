@@ -22,6 +22,7 @@ export const uploadToCloudinary = async (imageUri: string): Promise<string | nul
     const data = await response.json();
     if (response.ok && data.secure_url) {
       console.log("✅ Imagem enviada para Cloudinary:", data.secure_url);
+      
       return data.secure_url;
     } else {
       throw new Error("Erro ao enviar imagem para o Cloudinary");
@@ -40,7 +41,7 @@ export const uploadToAPI = async (imageUrl: string, token: string): Promise<any>
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ imageUrl, title: "Minha Imagem", isPublic: "true" }),
+      body: JSON.stringify({ imageUrl }),
     });
 
     const data = await response.json();
@@ -78,9 +79,14 @@ export const fetchUserPhotos = async (): Promise<Photo[]> => {
     }
 
     const data = await response.json();
-    console.log("Fotos recebidas:", data);
-    return data.photos as Photo[];
-  } catch (error) {
+
+    console.log("📸 Fotos recebidas da API:", data); // 🔴 ADICIONAMOS ESTE LOG
+
+
+    return data.photos.map((photo: Photo) => ({
+      ...photo,
+      title: photo.palette?.title || "Paleta sem título", // 🔥 Corrigido! Pegando o título correto
+    })) as Photo[];  } catch (error) {
     console.error("Erro na requisição:", error);
     throw error;
   }
