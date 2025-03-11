@@ -1,3 +1,4 @@
+// src/screens/ProfileScreen.tsx
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   View,
@@ -6,9 +7,9 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  ScrollView,
   Image,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
@@ -24,12 +25,10 @@ import {
   getUserPalettes,
   uploadProfilePhotoToCloudinary,
 } from "../services/photoServices";
-import {
-  updateProfilePhotoService,
-  deleteUserAccountService,
-} from "../services/profileServices";
+import { deleteUserAccountService } from "../services/profileServices";
 import { API_BASE_URL } from "@env";
 import CustomButton from "../components/CustomButton";
+import ScreenContainer from "../components/ScreenContainer";
 
 const DEFAULT_AVATAR =
   "https://cdn-icons-png.flaticon.com/512/847/847969.png";
@@ -61,6 +60,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
   const [followingCount, setFollowingCount] = useState(0);
   const [palettesCount, setPalettesCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [modified, setModified] = useState(false);
 
@@ -90,6 +90,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
       Alert.alert("Erro", "Erro ao carregar dados do usuário");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -145,8 +146,12 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+  };
+
   const navigateToScreen = (screen: string) => {
-    // Se o usuário clicar em "MyPalettes", redirecione para "Minhas Paletas"
     if (screen === "MyPalettes") {
       navigation.navigate("Minhas Paletas", { userId: user.id });
     } else {
@@ -285,15 +290,23 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
 
   if (loading) {
     return (
-      <View style={[styles.center, styles.container]}>
+      <ScreenContainer
+        containerStyle={{ flex: 1, padding: 16 }}
+        scrollable={true}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      >
         <ActivityIndicator size="large" color="#007BFF" />
-      </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <ScrollView
-      contentContainerStyle={[styles.container, { justifyContent: "space-between" }]}
+    <ScreenContainer
+      containerStyle={{ flex: 1, padding: 16 }}
+      scrollable={true}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
     >
       {updating && (
         <View style={styles.updatingOverlay}>
@@ -301,9 +314,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
         </View>
       )}
 
-      {/* Conteúdo Superior */}
-      <View>
-        {/* Avatar */}
+      <View style={styles.content}>
         <View style={styles.avatarContainer}>
           <TouchableOpacity onPress={handleChooseProfilePhoto}>
             <Image
@@ -352,40 +363,39 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
         </View>
 
         <View style={styles.statsContainer}>
-          <TouchableOpacity style={styles.statBox} onPress={() => navigateToScreen("Followers")}>
+          <TouchableOpacity
+            style={styles.statBox}
+            onPress={() => navigateToScreen("Followers")}
+          >
             <Text style={styles.statNumber}>{followersCount}</Text>
             <Text style={styles.statLabel}>Seguidores</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.statBox} onPress={() => navigateToScreen("Following")}>
+          <TouchableOpacity
+            style={styles.statBox}
+            onPress={() => navigateToScreen("Following")}
+          >
             <Text style={styles.statNumber}>{followingCount}</Text>
             <Text style={styles.statLabel}>Seguindo</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.statBox} onPress={() => navigateToScreen("MyPalettes")}>
+          <TouchableOpacity
+            style={styles.statBox}
+            onPress={() => navigateToScreen("MyPalettes")}
+          >
             <Text style={styles.statNumber}>{palettesCount}</Text>
             <Text style={styles.statLabel}>Paletas</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Botões de Ação na Parte Inferior */}
       <View style={styles.actionButtonsContainer}>
         <CustomButton title="Deletar Conta" filled={false} onPress={handleDeleteAccount} />
         <CustomButton title="Logout" onPress={handleLogout} />
       </View>
-    </ScrollView>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 10,
-    backgroundColor: "#f5f5f5",
-  },
-  center: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
   updatingOverlay: {
     position: "absolute",
     top: 0,
@@ -396,6 +406,9 @@ const styles = StyleSheet.create({
     zIndex: 999,
     justifyContent: "center",
     alignItems: "center",
+  },
+  content: {
+    flex: 1,
   },
   avatarContainer: {
     alignItems: "center",

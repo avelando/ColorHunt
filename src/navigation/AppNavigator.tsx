@@ -5,7 +5,7 @@ import { ActivityIndicator, View } from "react-native";
 import LoginScreen from "../screens/loginScreen";
 import RegisterScreen from "../screens/registerScreen";
 import TabNavigator from "./TabNavigator";
-import CreatePaletteScreen from "../screens/createPaletteScreen";
+import paletteScreen from "../screens/paletteScreen";
 import { RootStackParamList } from "../types/types";
 import { getUser } from "../services/userServices";
 import FollowersScreen from "../screens/followersScreen";
@@ -54,7 +54,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
-      <Stack.Screen name="CreatePalette" component={CreatePaletteScreen} />
+      <Stack.Screen name="CreatePalette" component={paletteScreen} />
       <Stack.Screen name="Followers" component={FollowersScreen} />
       <Stack.Screen name="Following" component={FollowingScreen} />
     </Stack.Navigator>

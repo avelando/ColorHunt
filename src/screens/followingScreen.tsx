@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from "react";
+// src/screens/FollowingScreen.tsx
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  View,
-  Text,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
   TouchableOpacity,
+  Text,
+  FlatList,
+  Alert,
   Image,
+  View,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { getFollowing } from "../services/userServices";
+import ScreenContainer from "../components/ScreenContainer";
+import MiniTabView from "../components/TabView";
+import { Ionicons } from "@expo/vector-icons";
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
@@ -16,6 +22,7 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
   const { userId } = route.params;
   const [following, setFollowing] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchFollowing = async () => {
     try {
@@ -23,24 +30,59 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
       setFollowing(data);
     } catch (error) {
       console.error("Erro ao buscar usuários seguidos:", error);
+      Alert.alert("Erro", "Não foi possível carregar os usuários seguidos.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
+  // Auto-refresh sempre que a tela ganhar foco
+  useFocusEffect(
+    useCallback(() => {
+      fetchFollowing();
+    }, [userId])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchFollowing();
+  };
+
+  // Header: seta de voltar e título configurados
   useEffect(() => {
-    fetchFollowing();
-  }, []);
+    navigation.setOptions({
+      headerShown: true,
+      headerTitle: "Seguindo",
+      headerTitleAlign: "center",
+      headerTintColor: "#000",
+      headerStyle: { backgroundColor: "#fff", elevation: 0, shadowOpacity: 0 },
+      headerLeft: () => (
+        <TouchableOpacity
+          style={styles.headerLeft}
+          onPress={() => navigation.navigate("Tabs", { screen: "Perfil" })}
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
+  // MiniTabView: ao tocar em "Seguidores", troca para FollowersScreen
+  const handleTabPress = (tab: "followers" | "following") => {
+    if (tab === "followers") {
+      navigation.replace("Followers", { userId });
+    }
+  };
 
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.itemContainer}
-      onPress={() => navigation.navigate("Profile", { userId: item.id })}
+      onPress={() =>
+        navigation.navigate("Tabs", { screen: "Perfil", params: { userId: item.id } })
+      }
     >
-      <Image
-        source={{ uri: item.profilePhoto || DEFAULT_AVATAR }}
-        style={styles.avatar}
-      />
+      <Image source={{ uri: item.profilePhoto || DEFAULT_AVATAR }} style={styles.avatar} />
       <View style={styles.infoContainer}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.username}>@{item.username}</Text>
@@ -48,34 +90,52 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
     </TouchableOpacity>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007BFF" />
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      {following.length === 0 ? (
-        <Text style={styles.emptyText}>Você não está seguindo ninguém.</Text>
+    <ScreenContainer
+      containerStyle={styles.container}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      scrollable={false}
+    >
+      <MiniTabView activeTab="following" onTabPress={handleTabPress} />
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#007BFF" />
+        </View>
+      ) : following.length === 0 ? (
+        <View style={styles.center}>
+          <Text style={styles.emptyText}>Nenhum usuário seguido encontrado.</Text>
+        </View>
       ) : (
         <FlatList
           data={following}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       )}
-    </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  listContainer: { padding: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  headerLeft: {
+    marginLeft: 10,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  listContainer: {
+    padding: 10,
+  },
   itemContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -90,9 +150,17 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     backgroundColor: "#ccc",
   },
-  infoContainer: { marginLeft: 10 },
-  name: { fontSize: 16, fontWeight: "bold" },
-  username: { fontSize: 14, color: "#666" },
+  infoContainer: {
+    marginLeft: 10,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  username: {
+    fontSize: 14,
+    color: "#666",
+  },
   emptyText: {
     textAlign: "center",
     marginTop: 20,
