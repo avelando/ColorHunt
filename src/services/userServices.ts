@@ -91,6 +91,22 @@ export const getUser = async () => {
   }
 };
 
+export const getUserById = async (userId: number) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await processResponse(response);
+    return data;
+  }
+  catch (error) {
+    throw error;
+  }
+};
+
 export const updateUser = async (userData: {
   name?: string;
   username?: string;
