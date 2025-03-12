@@ -4,7 +4,7 @@ import { API_BASE_URL } from "@env";
 export const uploadPalette = async (
   imageUrl: string,
   title: string
-): Promise<{ paletteId?: number; colors?: any[]; error?: string }> => {
+): Promise<{ paletteId?: number; photoId?: number; colors?: any[]; error?: string }> => {
   if (!title.trim()) {
     return { error: "Informe um título para a paleta." };
   }
@@ -26,11 +26,15 @@ export const uploadPalette = async (
 
     const data = await response.json();
 
-    if (response.ok) {
-      return { paletteId: data.palette.id, colors: data.palette.colors };
-    } else {
+    if (!response.ok) {
       return { error: data.error || "Erro ao gerar a paleta." };
     }
+
+    return {
+      paletteId: data.palette.id,
+      photoId: data.palette.photo.id,
+      colors: data.palette.colors,
+    };
   } catch (error) {
     console.error("Erro ao gerar a paleta:", error);
     return { error: "Erro de comunicação com o servidor." };

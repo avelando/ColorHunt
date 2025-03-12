@@ -1,5 +1,4 @@
-// src/screens/PaletteScreen.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Text,
   StyleSheet,
@@ -10,15 +9,18 @@ import {
   ActivityIndicator,
   Modal,
   Switch,
-  View, // Importante garantir que o View está sendo importado
+  View,
+  AppState,
+  AppStateStatus,
 } from "react-native";
 import { StackScreenProps } from "@react-navigation/stack";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { RootStackParamList } from "../types/types";
+import { RootStackParamList } from "../types/RootStackParamList";
 import { API_BASE_URL } from "@env";
 import { uploadPalette } from "../services/paletteServices";
 import ScreenContainer from "../components/ScreenContainer";
+import { Ionicons } from "@expo/vector-icons";
 
 type ColorItem = {
   id: number;
@@ -32,31 +34,35 @@ type CreatePaletteParams = {
     title: string;
     colors?: ColorItem[];
     isPublic: boolean;
+    photo?: { id: number; imageUrl?: string };
   };
 };
 
 type PaletteScreenProps = StackScreenProps<RootStackParamList, "CreatePalette"> & {
-  route: {
-    params: CreatePaletteParams;
-  };
+  route: { params: CreatePaletteParams };
 };
 
 const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
   const { imageUri, palette } = route.params;
-  const isEditMode = palette !== undefined;
-
-  const [title, setTitle] = useState<string>(isEditMode ? palette!.title : "");
-  const [loading, setLoading] = useState<boolean>(!isEditMode);
-  const [phase, setPhase] = useState<"initial" | "generated">(isEditMode ? "generated" : "initial");
+  const isEditMode = Boolean(palette);
+  const [title, setTitle] = useState(isEditMode ? palette!.title : "");
+  const [loading, setLoading] = useState(!isEditMode);
   const [paletteId, setPaletteId] = useState<number | null>(isEditMode ? palette!.id : null);
+  const [photoId, setPhotoId] = useState<number | null>(
+    isEditMode && palette?.photo ? palette.photo.id : null
+  );
+  const [photoUrl, setPhotoUrl] = useState<string | null>(
+    isEditMode && palette?.photo && palette?.photo.imageUrl ? palette.photo.imageUrl : null
+  );
   const [colors, setColors] = useState<ColorItem[]>(isEditMode ? palette!.colors ?? [] : []);
-  const [isPublic, setIsPublic] = useState<boolean>(isEditMode ? palette!.isPublic : false);
+  const [isPublic, setIsPublic] = useState(isEditMode ? palette!.isPublic : false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editingValue, setEditingValue] = useState<string>("");
-  const [unsavedChanges, setUnsavedChanges] = useState<boolean>(false);
-  const [exitModalVisible, setExitModalVisible] = useState<boolean>(false);
+  const [editingValue, setEditingValue] = useState("");
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [exitModalVisible, setExitModalVisible] = useState(false);
+  const displayImageUri =
+    imageUri || photoUrl || (isEditMode && photoId ? `${API_BASE_URL}/photos/${photoId}` : null);
 
-  // Configuração do header: título e seta de voltar
   useEffect(() => {
     navigation.setOptions({
       headerShown: true,
@@ -65,19 +71,37 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
       headerTintColor: "#000",
       headerStyle: { backgroundColor: "#fff", elevation: 0, shadowOpacity: 0 },
       headerLeft: () => (
-        <TouchableOpacity style={styles.headerLeft} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>←</Text>
+        <TouchableOpacity style={styles.headerLeft} onPress={tryDiscard}>
+          <Ionicons name="arrow-back" size={28} color="#000" />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, isEditMode]);
+  }, [navigation, isEditMode, unsavedChanges]);
 
-  // Em modo de criação, gera a paleta a partir da imagem
   useEffect(() => {
     if (!isEditMode && imageUri) {
       generatePalette();
     }
   }, [imageUri]);
+
+  useEffect(() => {
+    if (isEditMode && paletteId) {
+      fetchPaletteDetails();
+    }
+  }, [isEditMode, paletteId]);
+
+  function handleAppStateChange(nextAppState: AppStateStatus) {
+    if (nextAppState === "background" && unsavedChanges) {
+      handleDiscard();
+    }
+  }
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
+    return () => {
+      subscription.remove();
+    };
+  }, [unsavedChanges]);
 
   const generatePalette = async () => {
     setLoading(true);
@@ -87,16 +111,47 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
       if (result.error) {
         Alert.alert("Erro", result.error);
       } else {
-        setPaletteId(result.paletteId!);
+        if (result.paletteId === undefined || result.photoId === undefined) {
+          Alert.alert("Erro", "Resposta inválida do servidor.");
+          return;
+        }
+        setPaletteId(result.paletteId);
+        setPhotoId(result.photoId);
         setColors(result.colors ?? []);
         setTitle(defaultTitle);
         setUnsavedChanges(true);
-        setPhase("generated");
       }
-    } catch (error) {
+    } catch {
       Alert.alert("Erro", "Erro ao gerar paleta.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPaletteDetails = async () => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token || !paletteId) return;
+      const response = await fetch(`${API_BASE_URL}/palettes/${paletteId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.palette) {
+          setTitle(data.palette.title);
+          setColors(data.palette.colors);
+          setIsPublic(data.palette.isPublic);
+          if (data.palette.photo) {
+            setPhotoUrl(data.palette.photo.imageUrl || null);
+            setPhotoId(data.palette.photo.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao buscar paleta:", error);
     }
   };
 
@@ -107,9 +162,9 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
 
   const handleSaveColorEdit = () => {
     if (editingIndex !== null) {
-      const newColors = [...colors];
-      newColors[editingIndex].hex = editingValue;
-      setColors(newColors);
+      const updatedColors = [...colors];
+      updatedColors[editingIndex].hex = editingValue;
+      setColors(updatedColors);
       setEditingIndex(null);
       setEditingValue("");
       setUnsavedChanges(true);
@@ -122,6 +177,11 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
         Alert.alert("Erro", "Token não encontrado. Faça login novamente.");
+        setLoading(false);
+        return;
+      }
+      if (!paletteId) {
+        Alert.alert("Erro", "Não há paleta para salvar.");
         setLoading(false);
         return;
       }
@@ -139,29 +199,69 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
         setLoading(false);
         return;
       }
-      for (const color of colors) {
-        await fetch(`${API_BASE_URL}/colors/${color.id}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ hex: color.hex }),
-        });
+      if (!isEditMode) {
+        for (const color of colors) {
+          await fetch(`${API_BASE_URL}/colors/${color.id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ hex: color.hex }),
+          });
+        }
       }
       Alert.alert("Sucesso", "Paleta salva com sucesso!", [
-        { text: "OK", onPress: () => navigation.goBack() },
+        {
+          text: "OK",
+          onPress: () => {
+            setUnsavedChanges(false);
+            navigation.navigate("Tabs", { screen: "Minhas Paletas" });
+          },
+        },
       ]);
-      setUnsavedChanges(false);
-    } catch (error) {
+    } catch {
       Alert.alert("Erro", "Erro ao salvar paleta.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDeletePalette = async () => {
+    Alert.alert("Confirmar Exclusão", "Deseja realmente excluir esta paleta?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Excluir",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const token = await AsyncStorage.getItem("userToken");
+            if (!token) return;
+            const response = await fetch(`${API_BASE_URL}/palettes/${paletteId}`, {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            if (!response.ok) {
+              const errorText = await response.text();
+              Alert.alert("Erro", `Erro ao excluir a paleta: ${errorText}`);
+              return;
+            }
+            setUnsavedChanges(false);
+            navigation.navigate("Tabs", { screen: "Minhas Paletas" });
+          } catch (error) {
+            Alert.alert("Erro", "Ocorreu um erro ao excluir a paleta.");
+          }
+        },
+      },
+    ]);
+  };
+
   const handleDiscard = async () => {
-    if (paletteId) {
+    setExitModalVisible(false);
+    if (!isEditMode && paletteId) {
       try {
         const token = await AsyncStorage.getItem("userToken");
         if (!token) return;
@@ -173,37 +273,48 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
           },
         });
       } catch (error) {
-        console.error("Erro ao excluir paleta:", error);
+        console.error(error);
       }
     }
-    setExitModalVisible(false);
-    navigation.goBack();
+    setUnsavedChanges(false);
+    navigation.navigate("Tabs", { screen: "Minhas Paletas" });
   };
 
+  const tryDiscard = () => {
+    if (unsavedChanges) {
+      setExitModalVisible(true);
+    } else {
+      navigation.navigate("Tabs", { screen: "Minhas Paletas" });
+    }
+  };
+
+  const handleBeforeRemove = useCallback(
+    (e: any) => {
+      if (!unsavedChanges) return;
+      e.preventDefault();
+      setExitModalVisible(true);
+    },
+    [unsavedChanges]
+  );
+
   useFocusEffect(
-    React.useCallback(() => {
-      const handleBeforeRemove = (e: any) => {
-        if (!unsavedChanges) return;
-        e.preventDefault();
-        setExitModalVisible(true);
-      };
+    useCallback(() => {
       navigation.addListener("beforeRemove", handleBeforeRemove);
       return () => {
         navigation.removeListener("beforeRemove", handleBeforeRemove);
       };
-    }, [unsavedChanges])
+    }, [handleBeforeRemove, navigation])
   );
 
   return (
-    <ScreenContainer containerStyle={styles.container} scrollable={true}>
+    <ScreenContainer containerStyle={styles.container} scrollable>
       {loading ? (
         <ActivityIndicator size="large" color="#6200ee" />
       ) : (
         <>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.image} />
-          ) : null}
-
+          {displayImageUri && (
+            <Image source={{ uri: displayImageUri }} style={styles.image} />
+          )}
           <TextInput
             style={styles.titleInput}
             placeholder="Digite um título para a paleta"
@@ -213,15 +324,30 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
               setUnsavedChanges(true);
             }}
           />
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchLabel}>Pública:</Text>
-            <Switch
-              value={isPublic}
-              onValueChange={(val) => {
-                setIsPublic(val);
-                setUnsavedChanges(true);
-              }}
-            />
+          <View style={styles.switchStatusContainer}>
+            <Text>Privacidade:</Text>
+            <View style={styles.switchContainer}>
+              <Switch
+                value={isPublic}
+                onValueChange={(val) => {
+                  setIsPublic(val);
+                  setUnsavedChanges(true);
+                }}
+              />
+            </View>
+            <View style={styles.statusWrapper}>
+              {isPublic ? (
+                <View style={styles.statusCard}>
+                  <Ionicons name="lock-open" size={20} color="green" />
+                  <Text style={styles.statusText}>Pública</Text>
+                </View>
+              ) : (
+                <View style={styles.statusCard}>
+                  <Ionicons name="lock-closed" size={20} color="red" />
+                  <Text style={styles.statusText}>Privada</Text>
+                </View>
+              )}
+            </View>
           </View>
           <Text style={styles.subHeading}>Cores:</Text>
           <View style={styles.colorsContainer}>
@@ -243,15 +369,36 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
               </TouchableOpacity>
             ))}
           </View>
-          <TouchableOpacity style={styles.saveButton} onPress={handleSavePalette}>
-            <Text style={styles.saveButtonText}>Salvar Alterações</Text>
-          </TouchableOpacity>
         </>
       )}
+      {!loading &&
+        (isEditMode ? (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.halfButtonDelete} onPress={handleDeletePalette}>
+              <Ionicons name="trash" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.buttonText}>Excluir</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.halfButtonSave} onPress={handleSavePalette}>
+              <Ionicons name="checkmark" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.buttonText}>Salvar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.fullButton} onPress={handleSavePalette}>
+              <Ionicons name="checkmark" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.buttonText}>Salvar</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
       <Modal visible={exitModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalText}>Deseja sair sem salvar a paleta?</Text>
+            <Text style={styles.modalText}>
+              {isEditMode
+                ? "Deseja sair sem salvar as alterações?"
+                : "Deseja sair sem salvar a paleta?"}
+            </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.modalButton} onPress={() => setExitModalVisible(false)}>
                 <Text>Cancelar</Text>
@@ -268,31 +415,8 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: "#f5f5f5",
-  },
-  headerLeft: {
-    marginLeft: 10,
-  },
-  backText: {
-    fontSize: 18,
-    color: "#000",
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
-    color: "#000",
-  },
-  image: {
-    width: "100%",
-    height: 200,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
+  container: { flex: 1, padding: 16, backgroundColor: "#f5f5f5" },
+  headerLeft: { marginLeft: 10 },
   titleInput: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -301,26 +425,30 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: "#fff",
   },
-  switchContainer: {
+  switchStatusContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
-  switchLabel: {
-    fontSize: 16,
-    marginRight: 8,
-    color: "#000",
-  },
-  subHeading: {
-    fontSize: 18,
-    marginBottom: 8,
-    textAlign: "center",
-    color: "#000",
-  },
-  colorsContainer: {
+  switchContainer: { flexDirection: "row", alignItems: "center" },
+  statusWrapper: { flex: 1, alignItems: "flex-end" },
+  statusCard: {
     flexDirection: "row",
-    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#e0e0e0",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
+  statusText: { fontSize: 16, color: "#333", marginLeft: 8, fontWeight: "bold" },
+  image: { width: "100%", height: 200, borderRadius: 8, marginBottom: 16 },
+  subHeading: { fontSize: 18, marginBottom: 8, textAlign: "center", color: "#000" },
+  colorsContainer: { flexDirection: "row", justifyContent: "center", marginBottom: 20 },
   colorBox: {
     width: 60,
     height: 60,
@@ -329,51 +457,47 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 4,
   },
-  colorText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  saveButton: {
-    marginTop: 24,
-    backgroundColor: "#6200ee",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "80%",
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  modalText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  modalButtons: {
+  colorText: { color: "#fff", fontWeight: "bold" },
+  buttonContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: 16,
+    right: 16,
     flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
+    justifyContent: "space-between",
   },
+  fullButton: {
+    width: "100%",
+    backgroundColor: "green",
+    padding: 14,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  halfButtonDelete: {
+    width: "48%",
+    backgroundColor: "red",
+    padding: 14,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  halfButtonSave: {
+    width: "48%",
+    backgroundColor: "green",
+    padding: 14,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  modalContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" },
+  modalContent: { width: "80%", backgroundColor: "#fff", padding: 20, borderRadius: 10, alignItems: "center" },
+  modalText: { fontSize: 18, fontWeight: "bold", marginBottom: 16, textAlign: "center" },
+  modalButtons: { flexDirection: "row", justifyContent: "space-around", width: "100%" },
   modalButton: {
     padding: 10,
     borderRadius: 8,

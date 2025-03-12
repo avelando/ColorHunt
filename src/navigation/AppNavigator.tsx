@@ -1,3 +1,4 @@
+// src/navigation/AppNavigator.tsx
 import React, { useState, useEffect } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -5,11 +6,11 @@ import { ActivityIndicator, View } from "react-native";
 import LoginScreen from "../screens/loginScreen";
 import RegisterScreen from "../screens/registerScreen";
 import TabNavigator from "./TabNavigator";
-import paletteScreen from "../screens/paletteScreen";
-import { RootStackParamList } from "../types/types";
-import { getUser } from "../services/userServices";
+import PaletteScreen from "../screens/paletteScreen";
 import FollowersScreen from "../screens/followersScreen";
 import FollowingScreen from "../screens/followingScreen";
+import { getUser } from "../services/userServices";
+import { RootStackParamList } from "../types/RootStackParamList";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -54,7 +55,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
-      <Stack.Screen name="CreatePalette" component={paletteScreen} />
+      <Stack.Screen name="CreatePalette" component={PaletteScreen} />
       <Stack.Screen name="Followers" component={FollowersScreen} />
       <Stack.Screen name="Following" component={FollowingScreen} />
     </Stack.Navigator>

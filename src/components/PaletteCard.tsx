@@ -25,7 +25,7 @@ const PaletteCard: React.FC<PaletteCardProps> = ({ photo }) => {
         </View>
         <View style={styles.infoRow}>
           <Ionicons
-            name="lock-closed"
+            name="lock-open"
             size={20}
             color={photo.palette?.isPublic ? "green" : "red"}
           />

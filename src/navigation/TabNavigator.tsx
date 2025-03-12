@@ -4,8 +4,9 @@ import ExploreScreen from "../screens/exploreScreen";
 import MyPalettesScreen from "../screens/myPalettesScreen";
 import ProfileScreen from "../screens/profileScreen";
 import { Ionicons } from "@expo/vector-icons";
+import { TabParamList } from "../types/TabParamList";
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<TabParamList>();
 
 const TabNavigator = () => {
   return (
@@ -20,13 +21,7 @@ const TabNavigator = () => {
           } else if (route.name === "Perfil") {
             iconName = focused ? "person" : "person-outline";
           }
-          return (
-            <Ionicons
-              name={iconName as keyof typeof Ionicons.glyphMap}
-              size={size}
-              color={color}
-            />
-          );
+          return <Ionicons name={iconName as any} size={size} color={color} />;
         },
         tabBarActiveTintColor: "#007BFF",
         tabBarInactiveTintColor: "gray",
