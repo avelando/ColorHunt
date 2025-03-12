@@ -1,4 +1,3 @@
-// src/screens/MyPalettesScreen.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
@@ -12,7 +11,7 @@ import * as ImagePicker from "expo-image-picker";
 import { fetchUserPhotos, uploadToCloudinary } from "../services/photoServices";
 import { Photo } from "../interface/PhotoProps";
 import PaletteCard from "../components/PaletteCard";
-import ScreenContainer from "../components/ScreenContainer";
+import SafeAreaView from "../components/ScreenContainer";
 import { useFocusEffect } from "@react-navigation/native";
 
 const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
@@ -24,7 +23,6 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     setLoading(true);
     try {
       const photosData = await fetchUserPhotos();
-      // Ordena as paletas pelas mais recentes (baseado em createdAt)
       const sortedPhotos = photosData.sort((a, b) => {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
@@ -42,7 +40,6 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     }
   };
 
-  // Auto-refresh sempre que a tela ganhar foco
   useFocusEffect(
     useCallback(() => {
       loadPhotos();
@@ -55,7 +52,6 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     setRefreshing(false);
   };
 
-  // Ao clicar em um item, navega para a tela de edição, passando a paleta para edição.
   const handleCardPress = (photo: Photo) => {
     navigation.navigate("CreatePalette", { palette: photo });
   };
@@ -117,31 +113,41 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
 
   if (loading) {
     return (
-      <ScreenContainer containerStyle={{ flex: 1, padding: 10 }} scrollable={false}>
+      <SafeAreaView containerStyle={{ flex: 1, padding: 10 }} scrollable={false}>
         <ActivityIndicator size="large" color="#007BFF" />
-      </ScreenContainer>
+      </SafeAreaView>
     );
   }
 
   if (photos.length === 0) {
     return (
-      <ScreenContainer containerStyle={{ flex: 1, padding: 10, justifyContent: "center", alignItems: "center" }} scrollable={false}>
+      <SafeAreaView containerStyle={{ flex: 1, padding: 10, justifyContent: "center", alignItems: "center" }} scrollable={false}>
         <Text>Nenhuma foto encontrada.</Text>
         <TouchableOpacity style={styles.plusButton} onPress={showImageOptions}>
           <Text style={styles.plusButtonText}>+</Text>
         </TouchableOpacity>
-      </ScreenContainer>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScreenContainer containerStyle={{ flex: 1, padding: 10 }} scrollable={false} refreshing={refreshing} onRefresh={onRefresh}>
+    <SafeAreaView containerStyle={{ flex: 1, padding: 10 }} scrollable={false} refreshing={refreshing} onRefresh={onRefresh}>
       <FlatList
         data={photos}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handleCardPress(item)}>
-            <PaletteCard photo={item} />
+            {item.palette ? (
+              <PaletteCard
+                palette={item.palette}
+                imageUrl={item.imageUrl}
+                isPublic={item.palette?.isPublic ?? false}
+                isCurrentUser={true}
+                showPrivacyStatus={true}
+              />
+            ) : (
+              <Text style={{ textAlign: "center", marginVertical: 10 }}>Paleta inválida</Text>
+            )}
           </TouchableOpacity>
         )}
         contentContainerStyle={styles.listContent}
@@ -151,7 +157,7 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
       <TouchableOpacity style={styles.plusButton} onPress={showImageOptions}>
         <Text style={styles.plusButtonText}>+</Text>
       </TouchableOpacity>
-    </ScreenContainer>
+    </SafeAreaView>
   );
 };
 

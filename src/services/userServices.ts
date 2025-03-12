@@ -172,3 +172,86 @@ export const deleteUserAccount = async (): Promise<any> => {
     throw error;
   }
 };
+
+export const getFollowersWithStatus = async (userId: number) => {
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      throw new Error("Token não encontrado. Faça login novamente.");
+    }
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/followersWithStatus`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await processResponse(response);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const followUser = async (userId: number, followId: number) => {
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      throw new Error("Token não encontrado. Faça login novamente.");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/users/follow`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ followId }),
+    });
+
+    return await processResponse(response);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUserProfile = async (userId: number) => {
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      throw new Error("Token não encontrado. Faça login novamente.");
+    }
+    const response = await fetch(`${API_BASE_URL}/users/users/${userId}/profile`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return await processResponse(response);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const unfollowUser = async (followId: number, userId: any) => {
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      throw new Error("Token não encontrado. Faça login novamente.");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/users/users/unfollow`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ followId }),
+    });
+
+    return await processResponse(response);
+  } catch (error) {
+    throw error;
+  }
+};

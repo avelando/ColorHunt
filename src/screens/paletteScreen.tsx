@@ -108,6 +108,9 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
     const defaultTitle = "Minha Paleta";
     try {
       const result = await uploadPalette(imageUri!, defaultTitle);
+  
+      console.log("📥 Resposta da API no Frontend:", result);
+  
       if (result.error) {
         Alert.alert("Erro", result.error);
       } else {
@@ -121,12 +124,13 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ navigation, route }) => {
         setTitle(defaultTitle);
         setUnsavedChanges(true);
       }
-    } catch {
+    } catch (error) {
+      console.error("Erro ao gerar paleta:", error);
       Alert.alert("Erro", "Erro ao gerar paleta.");
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   const fetchPaletteDetails = async () => {
     try {

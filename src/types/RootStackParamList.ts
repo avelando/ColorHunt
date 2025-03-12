@@ -3,6 +3,7 @@ import { TabParamList } from "./TabParamList";
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
+  OtherUserProfile: { userId: number };
   Tabs: {
     screen?: keyof TabParamList;
   };

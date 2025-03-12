@@ -11,6 +11,7 @@ import FollowersScreen from "../screens/followersScreen";
 import FollowingScreen from "../screens/followingScreen";
 import { getUser } from "../services/userServices";
 import { RootStackParamList } from "../types/RootStackParamList";
+import OtherUserProfileScreen from "../screens/otherProfileScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -58,6 +59,7 @@ const AppNavigator = () => {
       <Stack.Screen name="CreatePalette" component={PaletteScreen} />
       <Stack.Screen name="Followers" component={FollowersScreen} />
       <Stack.Screen name="Following" component={FollowingScreen} />
+      <Stack.Screen name="OtherUserProfile" component={OtherUserProfileScreen} />
     </Stack.Navigator>
   );
 };

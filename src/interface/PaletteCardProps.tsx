@@ -1,5 +1,6 @@
-import { Photo } from "./PhotoProps"
+import { Palette } from "./PaletteProps";
 
 export interface PaletteCardProps {
-  photo: Photo;
+  palette: Palette;
+  imageUrl: string;
 }

@@ -1,4 +1,3 @@
-// src/screens/FollowingScreen.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
@@ -37,7 +36,6 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
     }
   };
 
-  // Auto-refresh sempre que a tela ganhar foco
   useFocusEffect(
     useCallback(() => {
       fetchFollowing();
@@ -49,7 +47,6 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
     await fetchFollowing();
   };
 
-  // Header: seta de voltar e título configurados
   useEffect(() => {
     navigation.setOptions({
       headerShown: true,
@@ -68,7 +65,6 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
     });
   }, [navigation]);
 
-  // MiniTabView: ao tocar em "Seguidores", troca para FollowersScreen
   const handleTabPress = (tab: "followers" | "following") => {
     if (tab === "followers") {
       navigation.replace("Followers", { userId });
@@ -78,9 +74,10 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.itemContainer}
-      onPress={() =>
-        navigation.navigate("Tabs", { screen: "Perfil", params: { userId: item.id } })
-      }
+      onPress={() => {
+        console.log("Navegando para perfil de:", item.id);
+        navigation.navigate("OtherUserProfile", { userId: item.id });
+      }}
     >
       <Image source={{ uri: item.profilePhoto || DEFAULT_AVATAR }} style={styles.avatar} />
       <View style={styles.infoContainer}>
@@ -88,7 +85,7 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
         <Text style={styles.username}>@{item.username}</Text>
       </View>
     </TouchableOpacity>
-  );
+  );  
 
   return (
     <ScreenContainer

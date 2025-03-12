@@ -1,10 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "@env";
 
-export const uploadPalette = async (
-  imageUrl: string,
-  title: string
-): Promise<{ paletteId?: number; photoId?: number; colors?: any[]; error?: string }> => {
+export const uploadPalette = async (imageUrl: string, title: string) => {
   if (!title.trim()) {
     return { error: "Informe um título para a paleta." };
   }
@@ -24,19 +21,26 @@ export const uploadPalette = async (
       body: JSON.stringify({ imageUrl, title, isPublic: false }),
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    console.log("🔍 Resposta bruta da API:", text);
 
-    if (!response.ok) {
-      return { error: data.error || "Erro ao gerar a paleta." };
+    try {
+      const data = JSON.parse(text);
+      if (!response.ok) {
+        return { error: data.error || "Erro ao gerar a paleta." };
+      }
+
+      return {
+        paletteId: data.palette?.id || null,
+        photoId: data.palette?.photoId || null,
+        colors: data.palette?.colors ?? [],
+      };
+    } catch (jsonError) {
+      console.error("❌ Erro ao processar JSON:", jsonError);
+      return { error: "Resposta inválida do servidor." };
     }
-
-    return {
-      paletteId: data.palette.id,
-      photoId: data.palette.photo.id,
-      colors: data.palette.colors,
-    };
   } catch (error) {
-    console.error("Erro ao gerar a paleta:", error);
+    console.error("❌ Erro ao gerar a paleta:", error);
     return { error: "Erro de comunicação com o servidor." };
   }
 };

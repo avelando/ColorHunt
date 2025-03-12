@@ -1,37 +1,38 @@
 import React from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { PaletteCardProps } from "../interface/PaletteCardProps";
+import { Palette } from "../interface/PaletteProps";
 
-const PaletteCard: React.FC<PaletteCardProps> = ({ photo }) => {
-  const colors = photo.palette?.colors || photo.colors || [];
-
+const PaletteCard: React.FC<{ palette: Palette; imageUrl: string; isPublic: boolean; isCurrentUser: boolean; showPrivacyStatus?: boolean; }> = ({
+  palette,
+  imageUrl,
+  isPublic,
+  isCurrentUser,
+  showPrivacyStatus
+}) => {
   return (
     <View style={styles.card}>
-      <Image source={{ uri: photo.imageUrl }} style={styles.photo} />
+      <Image source={{ uri: imageUrl }} style={styles.photo} />
       <View style={styles.cardContent}>
-      <Text style={styles.title}>
-      {photo.palette?.title && photo.palette.title.trim() !== "" 
-      ? photo.palette.title 
-      : "Paleta sem título"}
-      </Text>
+        <Text style={styles.title}>{palette.title || "Sem título"}</Text>
         <View style={styles.paletteRow}>
-          {colors.map((colorObj, index) => (
-            <View
-              key={index}
-              style={[styles.colorBox, { backgroundColor: colorObj.hex }]}
-            />
+          {palette.colors.map((color, index) => (
+            <View key={index} style={[styles.colorBox, { backgroundColor: color.hex }]} />
           ))}
         </View>
         <View style={styles.infoRow}>
-          <Ionicons
-            name="lock-open"
-            size={20}
-            color={photo.palette?.isPublic ? "green" : "red"}
-          />
-          <Text style={styles.statusText}>
-            {photo.palette?.isPublic ? "Pública" : "Privada"}
-          </Text>
+          {showPrivacyStatus && (
+            <>
+              <Ionicons
+                name={isPublic ? "lock-open" : "lock-closed"}
+                size={20}
+                color={isPublic ? "green" : "red"}
+              />
+              <Text style={[styles.statusText, { color: isPublic ? "green" : "red" }]}>
+                {isPublic ? "Pública" : "Privada"}
+              </Text>
+            </>
+          )}
         </View>
       </View>
     </View>
@@ -70,6 +71,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginRight: 5,
   },
+  noColorsText: {
+    fontSize: 12,
+    color: "#888",
+    marginTop: 10,
+  },
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -78,7 +84,18 @@ const styles = StyleSheet.create({
   statusText: {
     marginLeft: 5,
     fontSize: 14,
-    color: "#333",
+    fontWeight: "bold",
+  },
+  errorCard: {
+    padding: 10,
+    backgroundColor: "#f8d7da",
+    borderRadius: 8,
+    alignItems: "center",
+    marginVertical: 5,
+  },
+  errorText: {
+    color: "#721c24",
+    fontWeight: "bold",
   },
 });
 

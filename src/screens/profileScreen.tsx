@@ -1,4 +1,3 @@
-// src/screens/ProfileScreen.tsx
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   View,

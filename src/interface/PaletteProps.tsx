@@ -7,5 +7,6 @@ export interface Palette {
   title: string;
   isPublic: boolean;
   createdAt: string;
+  showPrivacyStatus?: boolean;
   colors: Color[];
 }

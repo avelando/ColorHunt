@@ -80,12 +80,12 @@ export const fetchUserPhotos = async (): Promise<Photo[]> => {
 
     const data = await response.json();
 
-    console.log("📸 Fotos recebidas da API:", data); // 🔴 ADICIONAMOS ESTE LOG
+    console.log("📸 Fotos recebidas da API:", data);
 
 
     return data.photos.map((photo: Photo) => ({
       ...photo,
-      title: photo.palette?.title || "Paleta sem título", // 🔥 Corrigido! Pegando o título correto
+      title: photo.palette?.title || "Paleta sem título",
     })) as Photo[];  } catch (error) {
     console.error("Erro na requisição:", error);
     throw error;
