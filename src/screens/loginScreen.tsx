@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomInput from "../components/CustomInput";
-import { loginUser } from "../services/userServices";
+import { loginUser } from "../services/userService";
 
 const LoginScreen = ({ navigation }: { navigation: any }) => {
   const [email, setEmail] = useState("");
@@ -13,18 +13,26 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
       Alert.alert("Erro", "Preencha todos os campos!");
       return;
     }
-
+  
     try {
       const data = await loginUser(email, password);
+  
+      if (!data.token || !data.userId) {
+        throw new Error("Dados inválidos recebidos do servidor.");
+      }
+  
       await AsyncStorage.setItem("userToken", data.token);
       await AsyncStorage.setItem("userId", data.userId.toString());
-
+  
+      const storedUserId = await AsyncStorage.getItem("userId");
+      console.log("✅ User ID salvo:", storedUserId);
+  
       Alert.alert("Sucesso", "Login realizado!");
       navigation.navigate("Tabs", { screen: "Explorar" });
     } catch (error: any) {
       Alert.alert("Erro", error.message || "Credenciais inválidas.");
     }
-  };
+  };      
 
   return (
     <View style={styles.container}>

@@ -9,7 +9,7 @@ import {
   View,
   Alert,
 } from "react-native";
-import { getUserProfile, followUser, unfollowUser } from "../services/userServices";
+import { getUserProfile, followUser, unfollowUser } from "../services/userService";
 import { Ionicons } from "@expo/vector-icons";
 import PaletteCard from "../components/PaletteCard";
 import { SafeAreaView } from "react-native-safe-area-context";

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import CustomInput from "../components/CustomInput";
-import { registerUser } from "../services/userServices";
+import { registerUser } from "../services/userService";
 
 const RegisterScreen = ({ navigation }: { navigation: any }) => {
   const [name, setName] = useState("");
@@ -56,10 +56,7 @@ const RegisterScreen = ({ navigation }: { navigation: any }) => {
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Registrar</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.loginLink}
-        onPress={() => navigation.navigate("Login")}
-      >
+      <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate("Login")}>
         <Text style={styles.loginText}>Já tem uma conta? Faça login</Text>
       </TouchableOpacity>
     </View>

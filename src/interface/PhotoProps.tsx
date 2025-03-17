@@ -1,11 +1,6 @@
-import { Color } from "./ColorProps";
-import { Palette } from "./PaletteProps";
-
 export interface Photo {
-  photo: any;
-  id: number;
+  id: string;
   imageUrl: string;
-  createdAt: string;
-  palette?: Palette;
-  colors?: Color[];
+  userId: string;
+  generatedColors?: string[];
 }

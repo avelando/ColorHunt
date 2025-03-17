@@ -1,12 +1,27 @@
-import { Color } from "./ColorProps";
-
 export interface Palette {
-  id: number;
-  photoId: number;
-  userId: number;
+  id: string;
+  photoId: string;
   title: string;
-  isPublic: boolean;
+  isPublic: string; 
+  userId: string;
   createdAt: string;
-  showPrivacyStatus?: boolean;
-  colors: Color[];
+
+  photo?: {
+    id: string;
+    imageUrl: string;
+  };
+
+  colors: {
+    id?: string;
+    hex: string;
+  }[];
+
+  user?: {
+    id: string;
+    name: string;
+    username: string;
+    profilePhoto: string;
+  };
+
+  imageUrl?: string;
 }

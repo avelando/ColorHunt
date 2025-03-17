@@ -1,171 +1,157 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  Text,
-  FlatList,
-  Alert,
+import React, { useState, useEffect } from "react";
+import { 
+  Text, 
+  TouchableOpacity, 
+  Alert, 
+  FlatList, 
+  StyleSheet 
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { fetchUserPhotos, uploadToCloudinary } from "../services/photoServices";
-import { Photo } from "../interface/PhotoProps";
-import PaletteCard from "../components/PaletteCard";
 import SafeAreaView from "../components/ScreenContainer";
-import { useFocusEffect } from "@react-navigation/native";
+import PaletteCard from "../components/PaletteCard";
+import { Palette } from "../interface/PaletteProps";
+import { getUserPalettes } from "../services/paletteService";
 
 const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [palettes, setPalettes] = useState<Palette[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const loadPhotos = async () => {
-    setLoading(true);
+  // Função para carregar as paletas do usuário
+  const loadPalettes = async () => {
     try {
-      const photosData = await fetchUserPhotos();
-      const sortedPhotos = photosData.sort((a, b) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
-      setPhotos(
-        sortedPhotos.map((photo) => ({
-          ...photo,
-          title: photo.palette?.title || "Paleta sem título",
-        }))
+      setLoading(true);
+      const result = await getUserPalettes();
+      console.log("Paletas recebidas do serviço:", result);
+      const sortedPalettes = result.palettes.sort(
+        (a: Palette, b: Palette) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
+      setPalettes(sortedPalettes);
     } catch (error) {
-      console.error("Erro ao carregar fotos:", error);
-      Alert.alert("Erro", "Não foi possível carregar as fotos.");
+      console.error("Erro ao carregar paletas:", error);
+      Alert.alert("Erro", "Não foi possível carregar as paletas.");
     } finally {
       setLoading(false);
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadPhotos();
-    }, [])
-  );
-
+  // Atualiza as paletas ao puxar para atualizar
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadPhotos();
+    await loadPalettes();
     setRefreshing(false);
   };
 
-  const handleCardPress = (photo: Photo) => {
-    navigation.navigate("CreatePalette", { palette: photo });
+  useEffect(() => {
+    loadPalettes();
+  }, []);
+
+  // Função para tirar foto e navegar para a tela de criação de paleta
+  const handleTakePhoto = async () => {
+    const { granted } = await ImagePicker.requestCameraPermissionsAsync();
+    if (!granted) {
+      Alert.alert("Permissão necessária", "Você precisa permitir o uso da câmera!");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled && result.assets.length > 0) {
+      const imageUri = result.assets[0].uri;
+      navigation.navigate("CreatePalette", { photoUri: imageUri, onSave: loadPalettes });
+    }
+  };
+
+  // Função para escolher foto da galeria e navegar para a tela de criação de paleta
+  const handleChooseFromGallery = async () => {
+    const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!granted) {
+      Alert.alert("Permissão necessária", "Você precisa permitir o acesso à galeria!");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled && result.assets.length > 0) {
+      const imageUri = result.assets[0].uri;
+      navigation.navigate("CreatePalette", { photoUri: imageUri, onSave: loadPalettes });
+    }
   };
 
   const showImageOptions = () => {
     Alert.alert(
-      "Adicionar Foto",
+      "Criar Nova Paleta",
       "Escolha uma opção",
       [
-        { text: "Tirar Foto", onPress: handleTakePhoto },
-        { text: "Escolher da Galeria", onPress: handleChooseFromGallery },
-        { text: "Cancelar", style: "cancel" },
+        { text: "📷 Tirar Foto", onPress: handleTakePhoto },
+        { text: "📁 Escolher da Galeria", onPress: handleChooseFromGallery },
+        { text: "❌ Cancelar", style: "cancel" },
       ],
       { cancelable: true }
     );
   };
 
-  const handleTakePhoto = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Permissão necessária", "Você precisa permitir o uso da câmera!");
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const photoUri = result.assets[0].uri;
-      const secureUrl = await uploadToCloudinary(photoUri);
-      if (secureUrl) {
-        navigation.navigate("CreatePalette", { imageUri: secureUrl });
-      } else {
-        Alert.alert("Erro", "Não foi possível enviar a imagem para o Cloudinary.");
+  // Renderiza cada paleta usando o PaletteCard
+  const renderItem = ({ item }: { item: Palette }) => (
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate("CreatePalette", { paletteId: item.id, onSave: loadPalettes })
       }
-    }
-  };
-
-  const handleChooseFromGallery = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Permissão necessária", "Você precisa permitir o acesso à galeria!");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const photoUri = result.assets[0].uri;
-      const secureUrl = await uploadToCloudinary(photoUri);
-      if (secureUrl) {
-        navigation.navigate("CreatePalette", { imageUri: secureUrl });
-      } else {
-        Alert.alert("Erro", "Não foi possível enviar a imagem para o Cloudinary.");
-      }
-    }
-  };
-
-  if (loading) {
-    return (
-      <SafeAreaView containerStyle={{ flex: 1, padding: 10 }} scrollable={false}>
-        <ActivityIndicator size="large" color="#007BFF" />
-      </SafeAreaView>
-    );
-  }
-
-  if (photos.length === 0) {
-    return (
-      <SafeAreaView containerStyle={{ flex: 1, padding: 10, justifyContent: "center", alignItems: "center" }} scrollable={false}>
-        <Text>Nenhuma foto encontrada.</Text>
-        <TouchableOpacity style={styles.plusButton} onPress={showImageOptions}>
-          <Text style={styles.plusButtonText}>+</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
+    >
+      <PaletteCard
+        palette={item}
+        isPublic={item.isPublic}
+        isCurrentUser={true}
+        showPrivacyStatus={true}
+      />
+    </TouchableOpacity>
+  );
 
   return (
-    <SafeAreaView containerStyle={{ flex: 1, padding: 10 }} scrollable={false} refreshing={refreshing} onRefresh={onRefresh}>
-      <FlatList
-        data={photos}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleCardPress(item)}>
-            {item.palette ? (
-              <PaletteCard
-                palette={item.palette}
-                imageUrl={item.imageUrl}
-                isPublic={item.palette?.isPublic ?? false}
-                isCurrentUser={true}
-                showPrivacyStatus={true}
-              />
-            ) : (
-              <Text style={{ textAlign: "center", marginVertical: 10 }}>Paleta inválida</Text>
-            )}
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.listContent}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-      />
-      <TouchableOpacity style={styles.plusButton} onPress={showImageOptions}>
-        <Text style={styles.plusButtonText}>+</Text>
+    <SafeAreaView containerStyle={styles.container} scrollable={false}>
+      {loading ? (
+        <Text style={styles.loadingText}>Carregando...</Text>
+      ) : (
+        <FlatList
+          data={palettes}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          ListEmptyComponent={
+            <TouchableOpacity
+              style={styles.emptyContainer}
+              onPress={showImageOptions}
+            >
+              <Text>Nenhuma paleta encontrada. Toque para criar uma.</Text>
+            </TouchableOpacity>
+          }
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      )}
+
+      {/* Botão flutuante para adicionar nova paleta */}
+      <TouchableOpacity style={styles.addButton} onPress={showImageOptions}>
+        <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingBottom: 20,
+  container: {
+    flex: 1,
+    padding: 10,
   },
-  plusButton: {
+  emptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 50,
+  },
+  addButton: {
     position: "absolute",
     bottom: 30,
     right: 30,
@@ -177,10 +163,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 5,
   },
-  plusButtonText: {
+  addButtonText: {
     color: "#fff",
     fontSize: 32,
     fontWeight: "bold",
+  },
+  loadingText: {
+    textAlign: "center",
+    marginTop: 20,
   },
 });
 

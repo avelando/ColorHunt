@@ -19,11 +19,11 @@ import {
   getFollowers,
   getFollowing,
   deleteUserAccount,
-} from "../services/userServices";
+} from "../services/userService";
 import {
   getUserPalettes,
   uploadProfilePhotoToCloudinary,
-} from "../services/photoServices";
+} from "../services/photoService";
 import { deleteUserAccountService } from "../services/profileServices";
 import { API_BASE_URL } from "@env";
 import CustomButton from "../components/CustomButton";

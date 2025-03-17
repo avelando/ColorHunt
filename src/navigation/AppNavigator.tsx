@@ -1,4 +1,3 @@
-// src/navigation/AppNavigator.tsx
 import React, { useState, useEffect } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,7 +8,6 @@ import TabNavigator from "./TabNavigator";
 import PaletteScreen from "../screens/paletteScreen";
 import FollowersScreen from "../screens/followersScreen";
 import FollowingScreen from "../screens/followingScreen";
-import { getUser } from "../services/userServices";
 import { RootStackParamList } from "../types/RootStackParamList";
 import OtherUserProfileScreen from "../screens/otherProfileScreen";
 
@@ -65,3 +63,7 @@ const AppNavigator = () => {
 };
 
 export default AppNavigator;
+function getUser() {
+  throw new Error("Function not implemented.");
+}
+

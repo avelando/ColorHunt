@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { getFollowing } from "../services/userServices";
+import { getFollowing } from "../services/userService";
 import ScreenContainer from "../components/ScreenContainer";
 import MiniTabView from "../components/TabView";
 import { Ionicons } from "@expo/vector-icons";
