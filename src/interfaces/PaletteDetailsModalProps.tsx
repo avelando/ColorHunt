@@ -1,9 +1,10 @@
-import { Palette } from "./PaletteProps";
+import { Palette } from '../interfaces/PaletteProps';
 
 export interface PaletteDetailsModalProps {
   visible: boolean;
   onClose: () => void;
   imageUrl?: string;
-  palette: Palette | null;
+  palette: Palette;
   onAddToFavorites: () => void;
+  navigation: any;
 }

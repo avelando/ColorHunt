@@ -94,12 +94,15 @@ const ExplorePalettesScreen = ({ navigation }: { navigation: any }) => {
       )}
 
       {/* Modal de Detalhes da Paleta */}
-      <PaletteDetailsModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        palette={selectedPalette}
-        onAddToFavorites={onRefresh}
-      />
+      {selectedPalette && (
+        <PaletteDetailsModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          palette={selectedPalette}
+          onAddToFavorites={onRefresh}
+          navigation={navigation}
+        />
+      )}
     </SafeAreaView>
   );
 };
