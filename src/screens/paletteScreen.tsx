@@ -43,8 +43,6 @@ const PaletteScreen: React.FC<PaletteScreenProps> = ({ route, navigation }) => {
   const [hasLoadedPalette, setHasLoadedPalette] = useState(false);
   const [hasCreatedPalette, setHasCreatedPalette] = useState(false);
 
-  const [originalPalette, setOriginalPalette] = useState<Palette | null>(null);
-
   const [exitModalVisible, setExitModalVisible] = useState(false);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const isEditMode = Boolean(route.params?.palette);

@@ -2,7 +2,6 @@ import api from './apiService';
 import { AxiosResponse } from 'axios';
 
 import { Palette } from '../interfaces/PaletteProps';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CreatePalettePayload } from '../interfaces/CreatePaletteProps';
 
 export const createPalette = async (paletteData: CreatePalettePayload): Promise<Palette> => {

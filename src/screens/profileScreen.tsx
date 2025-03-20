@@ -1,28 +1,22 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   View,
-  TextInput,
   ActivityIndicator,
   Alert,
   TouchableOpacity,
-  RefreshControl,
-  StyleSheet,
   Text,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "expo-image-picker";
 import {
   getUser,
-  updateUser,
   getFollowers,
   getFollowing,
-  deleteUserAccount,
-  uploadProfilePhoto,
 } from "../services/userService";
 import { getUserPalettes } from "../services/paletteService";
 import CustomButton from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
 import UserProfileHeader from "../components/UserProfileHeader";
+import { profileStyles } from "../styles/profileScreen";
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
@@ -78,8 +72,8 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
     navigation.setOptions({
       headerRight: () =>
         modified ? (
-          <TouchableOpacity style={styles.headerButton}>
-            <Text style={styles.headerButtonText}>Salvar</Text>
+          <TouchableOpacity style={profileStyles.headerButton}>
+            <Text style={profileStyles.headerButtonText}>Salvar</Text>
           </TouchableOpacity>
         ) : null,
     });
@@ -112,8 +106,8 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
   if (!user.id) {
     return (
       <ScreenContainer>
-        <View style={styles.notAuthenticatedContainer}>
-          <Text style={styles.infoText}>Você não está autenticado.</Text>
+        <View style={profileStyles.notAuthenticatedContainer}>
+          <Text style={profileStyles.infoText}>Você não está autenticado.</Text>
           <CustomButton title="Login" onPress={() => navigation.navigate("Login")} />
         </View>
       </ScreenContainer>
@@ -128,7 +122,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
       containerStyle={{ flex: 1 }}
     >
       {updating && (
-        <View style={styles.updatingOverlay}>
+        <View style={profileStyles.updatingOverlay}>
           <ActivityIndicator size="large" color="#fff" />
         </View>
       )}
@@ -147,64 +141,21 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
         onPressFollowing={() => navigation.navigate("Following", { userId: user.id })}
       />
 
-      <View style={styles.actionButtonsContainer}>
+      <View style={profileStyles.actionButtonsContainer}>
         <CustomButton
           title="Logout"
           onPress={handleLogout}
-          style={styles.halfWidthButton}
+          style={profileStyles.halfWidthButton}
           filled={false}
         />
         <CustomButton
           title="Editar"
           onPress={() => navigation.navigate("Editar")}
-          style={styles.halfWidthButton}
+          style={profileStyles.halfWidthButton}
         />
       </View>
     </ScreenContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  updatingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    zIndex: 999,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerButton: {
-    marginRight: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: "#007BFF",
-    borderRadius: 5,
-  },
-  headerButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  notAuthenticatedContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  infoText: {
-    fontSize: 18,
-    marginBottom: 20,
-  },
-  actionButtonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  halfWidthButton: {
-    width: "48%",
-  },
-});
 
 export default ProfileScreen;

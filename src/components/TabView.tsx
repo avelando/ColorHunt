@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
+import { tabStyles } from "../styles/tabStyles";
 
 interface MiniTabViewProps {
   activeTab: "followers" | "following";
@@ -8,55 +9,27 @@ interface MiniTabViewProps {
 
 const MiniTabView: React.FC<MiniTabViewProps> = ({ activeTab, onTabPress }) => {
   return (
-    <View style={styles.container}>
+    <View style={tabStyles.container}>
       <TouchableOpacity
         activeOpacity={1}
-        style={[styles.tab, activeTab === "followers" && styles.activeTab]}
+        style={[tabStyles.tab, activeTab === "followers" && tabStyles.activeTab]}
         onPress={() => onTabPress("followers")}
       >
-        <Text style={[styles.tabText, activeTab === "followers" && styles.activeTabText]}>
+        <Text style={[tabStyles.tabText, activeTab === "followers" && tabStyles.activeTabText]}>
           Seguidores
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
         activeOpacity={1}
-        style={[styles.tab, activeTab === "following" && styles.activeTab]}
+        style={[tabStyles.tab, activeTab === "following" && tabStyles.activeTab]}
         onPress={() => onTabPress("following")}
       >
-        <Text style={[styles.tabText, activeTab === "following" && styles.activeTabText]}>
+        <Text style={[tabStyles.tabText, activeTab === "following" && tabStyles.activeTabText]}>
           Seguindo
         </Text>
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    marginHorizontal: 10,
-    marginVertical: 10,
-    borderRadius: 8,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  activeTab: {
-    backgroundColor: "#007BFF",
-  },
-  tabText: {
-    fontSize: 16,
-    color: "#007BFF",
-  },
-  activeTabText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-});
 
 export default MiniTabView;
