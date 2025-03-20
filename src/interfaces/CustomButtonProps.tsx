@@ -2,9 +2,11 @@ import { StyleProp, ViewStyle, TextStyle } from "react-native";
 
 export interface CustomButtonProps {
   title: string;
-  onPress: () => void;
+  onPress?: () => void;
   filled?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
+  hasBorder?: boolean;
 }

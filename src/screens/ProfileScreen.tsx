@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   ActivityIndicator,
@@ -141,17 +141,19 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
         onPressFollowing={() => navigation.navigate("Following", { userId: user.id })}
       />
 
-      <View style={profileStyles.actionButtonsContainer}>
+      <View style={{ flex: 1 }} />
+
+      <View style={profileStyles.bottomButtonsContainer}>
         <CustomButton
           title="Logout"
           onPress={handleLogout}
-          style={profileStyles.halfWidthButton}
+          style={profileStyles.smallButton}
           filled={false}
         />
         <CustomButton
           title="Editar"
           onPress={() => navigation.navigate("Editar")}
-          style={profileStyles.halfWidthButton}
+          style={profileStyles.smallButton}
         />
       </View>
     </ScreenContainer>

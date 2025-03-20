@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   statNumber: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#007BFF",
+    color: "#6a1b9a",
   },
   statLabel: {
     fontSize: 14,
