@@ -1,5 +1,13 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Alert } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  Animated,
+  StyleSheet,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomInput from "../../components/CustomInput";
 import { loginUser } from "../../services/userService";
@@ -16,38 +24,56 @@ const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Opacidade do gradiente
+  const gradientOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(gradientOpacity, {
+      toValue: 0,
+      duration: 3000,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Erro", "Preencha todos os campos!");
       return;
     }
-  
     try {
       const data = await loginUser(email, password);
-  
       if (!data.token || !data.userId) {
         throw new Error("Dados inválidos recebidos do servidor.");
       }
-  
-      console.log("🔍 Salvando token e ID do usuário...");
       await AsyncStorage.setItem("userToken", data.token);
       await AsyncStorage.setItem("userId", data.userId.toString());
-
       Alert.alert("Sucesso", "Login realizado!");
-      
+
       navigation.reset({
         index: 0,
         routes: [{ name: "Tabs" }],
       });
     } catch (error: any) {
-      console.error("❌ Erro ao logar:", error.message);
       Alert.alert("Erro", error.message || "Credenciais inválidas.");
     }
   };
 
   return (
-    <View style={globalStyles.container}>
+    <View style={[globalStyles.container, { backgroundColor: "#6a1b9a" }]}>
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          { opacity: gradientOpacity },
+        ]}
+      >
+        <LinearGradient
+          colors={["#7b4397", "#dc2430"]}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+
       <Text style={globalStyles.title}>Login</Text>
+
       <CustomInput
         label="Email"
         placeholder="Digite seu email"
