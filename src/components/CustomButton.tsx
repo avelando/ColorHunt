@@ -31,7 +31,6 @@ const CustomButton: React.FC<ExtendedCustomButtonProps> = ({
       style={[
         buttonStyles.button,
         {
-          paddingVertical: adjustedPaddingVertical,
           paddingHorizontal: adjustedPaddingHorizontal,
           borderRadius: 5,
           backgroundColor: filled ? "#6a1b9a" : "transparent",

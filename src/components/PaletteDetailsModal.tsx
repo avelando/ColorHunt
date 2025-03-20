@@ -105,11 +105,11 @@ const PaletteDetailsModal: React.FC<PaletteDetailsModalProps> = ({
             />
 
             <CustomButton 
-              title={loading ? "Salvando..." : "Salvar paleta"}
+              title={loading ? "Copiando..." : "Copiar paleta"}
               onPress={handleAddToFavorites}
               filled={true}
               containerStyle={[styles.button, { backgroundColor: "#6a1b9a"}]}
-              textStyle={{ fontSize: 14, color: "#fff" }}
+              textStyle={{ fontSize: 15, color: "#fff" }}
             />
           </View>
 
@@ -133,7 +133,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     paddingTop: 40,
+    paddingBottom: 30,
     alignItems: "center",
+    justifyContent: "center",
   },
   closeButton: {
     position: "absolute",
@@ -173,8 +175,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: "90%",
-    height: 80,
-    marginTop: 20,
   },
   button: {
     flex: 1,
