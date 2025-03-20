@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Text, 
   TouchableOpacity, 
   Alert, 
   FlatList, 
   View,
+  Animated,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,12 +14,15 @@ import PaletteCard from "../components/PaletteCard";
 import { Palette } from "../interfaces/PaletteProps";
 import { getUserPalettes } from "../services/paletteService";
 import { myPaletteScreenStyles } from "../styles/myPalettesScreen";
+import { Ionicons } from "@expo/vector-icons"
 
 const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
   const insets = useSafeAreaInsets();
   const [palettes, setPalettes] = useState<Palette[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [expandOptions, setExpandOptions] = useState(false);
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   const loadPalettes = async () => {
     try {
@@ -52,8 +56,19 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
   };
 
   useEffect(() => {
-    loadPalettes();
-  }, []);
+    Animated.timing(slideAnim, {
+      toValue: expandOptions ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();    
+  }, [expandOptions]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadPalettes();
+    });
+    return unsubscribe;
+  }, [navigation]);  
 
   const handleTakePhoto = async () => {
     const { granted } = await ImagePicker.requestCameraPermissionsAsync();
@@ -87,19 +102,6 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     }
   };
 
-  const showImageOptions = () => {
-    Alert.alert(
-      "Criar Nova Paleta",
-      "Escolha uma opção",
-      [
-        { text: "📷 Tirar Foto", onPress: handleTakePhoto },
-        { text: "📁 Escolher da Galeria", onPress: handleChooseFromGallery },
-        { text: "❌ Cancelar", style: "cancel" },
-      ],
-      { cancelable: true }
-    );
-  };
-
   const renderItem = ({ item }: { item: Palette }) => (
     <TouchableOpacity
       onPress={() =>
@@ -128,9 +130,8 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
           ListEmptyComponent={
             <TouchableOpacity
               style={myPaletteScreenStyles.emptyContainer}
-              onPress={showImageOptions}
             >
-              <Text>Nenhuma paleta encontrada. Toque para criar uma.</Text>
+              <Text>Nenhuma paleta encontrada.</Text>
             </TouchableOpacity>
           }
           refreshing={refreshing}
@@ -138,9 +139,52 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
         />
       )}
 
-      <TouchableOpacity style={myPaletteScreenStyles.addButton} onPress={showImageOptions}>
-        <Text style={myPaletteScreenStyles.addButtonText}>+</Text>
-      </TouchableOpacity>
+      <View style={myPaletteScreenStyles.fabContainer}>
+        <Animated.View
+          style={[
+            myPaletteScreenStyles.fabOptionsContainer,
+            {
+              transform: [
+                {
+                  translateY: slideAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [50, 0], // inicia 50 unidades abaixo e desliza para a posição final
+                  }),
+                },
+              ],
+              opacity: slideAnim,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={myPaletteScreenStyles.fabOptionButton}
+            onPress={() => {
+              setExpandOptions(false);
+              handleTakePhoto();
+            }}
+          >
+            <Ionicons name="camera" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={myPaletteScreenStyles.fabOptionButton}
+            onPress={() => {
+              setExpandOptions(false);
+              handleChooseFromGallery();
+            }}
+          >
+            <Ionicons name="image" size={24} color="#fff" />
+          </TouchableOpacity>
+        </Animated.View>
+
+        <TouchableOpacity
+          style={myPaletteScreenStyles.fabButton}
+          onPress={() => setExpandOptions(!expandOptions)}
+        >
+          <Text style={myPaletteScreenStyles.fabButtonText}>
+            {expandOptions ? "✕" : "+"}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };

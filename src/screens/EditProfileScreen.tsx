@@ -15,6 +15,7 @@ import ScreenContainer from "../components/ScreenContainer";
 import { Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { editStyles } from "../styles/editProfileScreen";
+import CustomButton from "../components/CustomButton";
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
@@ -232,21 +233,19 @@ const EditProfileScreen = ({ navigation }: { navigation: any }) => {
           </View>
         </View>
       </View>
-      <View style={editStyles.actionButtonsContainer}>
-        <TouchableOpacity style={editStyles.deleteButton} onPress={handleDeleteAccount}>
-          <Text style={editStyles.deleteButtonText}>Excluir Conta</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[editStyles.saveButton, { opacity: isModified ? 1 : 0.5 }]}
+      <View style={editStyles.bottomButtonsContainer}>
+        <CustomButton
+          title="Excluir conta"
+          onPress={handleDeleteAccount}
+          style={editStyles.smallButton}
+          filled={false}
+        />
+        <CustomButton
+          title={updating ? "Salvando..." : "Salvar"}
           onPress={handleSave}
-          disabled={!isModified}
-        >
-          {updating ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={editStyles.saveButtonText}>Salvar</Text>
-          )}
-        </TouchableOpacity>
+          style={[editStyles.smallButton, { opacity: isModified ? 1 : 0.5 }]}
+          disabled={!isModified || updating}
+        />
       </View>
     </ScreenContainer>
   );

@@ -1,10 +1,10 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { StyleSheet, Platform } from "react-native";
 import ExploreScreen from "../screens/ExploreScreen";
 import MyPalettesScreen from "../screens/MyPalettesScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import { Ionicons } from "@expo/vector-icons";
+import { tabNavStyles } from "../styles/tabNavStyles";
 
 const Tab = createBottomTabNavigator();
 
@@ -25,9 +25,9 @@ const TabsNavigator = () => {
         },
         tabBarActiveTintColor: "#ffffff",
         tabBarInactiveTintColor: "#D1C4E9",
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabLabel,
-        tabBarItemStyle: styles.tabItem,
+        tabBarStyle: tabNavStyles.tabBar,
+        tabBarLabelStyle: tabNavStyles.tabLabel,
+        tabBarItemStyle: tabNavStyles.tabItem,
         headerShown: false,
       })}
     >
@@ -37,32 +37,5 @@ const TabsNavigator = () => {
     </Tab.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  tabBar: {
-    width: "90%",
-    marginHorizontal: "5%",
-    elevation: 5,
-    marginBottom: 10,
-    backgroundColor: "#7E57C2",
-    borderRadius: 30,
-    height: 60,
-    borderTopWidth: 0,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    paddingBottom: Platform.OS === "ios" ? 10 : 0,
-  },
-  tabItem: {
-    justifyContent: "center",
-    alignItems: "center",
-    top: "5%",
-  },
-  tabLabel: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-});
 
 export default TabsNavigator;

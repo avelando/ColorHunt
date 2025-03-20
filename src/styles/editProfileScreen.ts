@@ -86,25 +86,12 @@ export const editStyles = StyleSheet.create({
     top: "50%",
     transform: [{ translateY: -10 }],
   },
-  actionButtonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    margin: 20,
-  },
   saveButtonBottom: {
     flex: 1,
     backgroundColor: "#007BFF",
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
-  },
-  deleteButtonBottom: {
-    flex: 1,
-    backgroundColor: "#FF4D4D",
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-    marginLeft: 10,
   },
   saveButtonTop: {
     flex: 1,
@@ -114,32 +101,21 @@ export const editStyles = StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
   },
-  deleteButtonTop: {
-    flex: 1,
-    backgroundColor: "#FF4D4D",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    alignItems: "center",
-    marginLeft: 10,
-  },
-  deleteButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  deleteButton: {
-    width: "48%",
-    backgroundColor: "#FF4D4D",
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-  },
   saveButton: {
     width: "48%",
     backgroundColor: "#007BFF",
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
+  },
+  bottomButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  smallButton: {
+    width: 140,
+    marginHorizontal: 5
   },
 });

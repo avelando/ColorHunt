@@ -33,12 +33,14 @@ export const profileStyles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 20,
   },
-  actionButtonsContainer: {
+  bottomButtonsContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
   },
-  halfWidthButton: {
-    width: "48%",
+  smallButton: {
+    width: 140,
+    marginHorizontal: 10,
   },
 });
