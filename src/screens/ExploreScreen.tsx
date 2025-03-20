@@ -9,15 +9,18 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SafeAreaView from "../components/ScreenContainer";
 import PaletteCard from "../components/PaletteCard";
+import PaletteDetailsModal from "../components/PaletteDetailsModal";
 import { Palette } from "../interfaces/PaletteProps";
 import { getPublicPalettes } from "../services/paletteService";
 import { exploreStyles } from "../styles/explore";
 
-const ExploreScreen = ({ navigation }: { navigation: any }) => {
+const ExplorePalettesScreen = ({ navigation }: { navigation: any }) => {
   const insets = useSafeAreaInsets();
   const [palettes, setPalettes] = useState<Palette[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [selectedPalette, setSelectedPalette] = useState<Palette | null>(null);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   const loadPublicPalettes = async () => {
     try {
@@ -54,12 +57,18 @@ const ExploreScreen = ({ navigation }: { navigation: any }) => {
     loadPublicPalettes();
   }, []);
 
+  const handleOpenModal = (palette: Palette) => {
+    setSelectedPalette(palette);
+    setModalVisible(true);
+  };
+
+  const handleAddToFavorites = () => {
+    Alert.alert("✅ Sucesso", "Paleta adicionada à sua lista!");
+    setModalVisible(false);
+  };
+
   const renderItem = ({ item }: { item: Palette }) => (
-    <TouchableOpacity
-      onPress={() =>
-        navigation.navigate("ViewPalette", { paletteId: item.id })
-      }
-    >
+    <TouchableOpacity onPress={() => handleOpenModal(item)}>
       <PaletteCard
         palette={item}
         isPublic={item.isPublic}
@@ -88,8 +97,16 @@ const ExploreScreen = ({ navigation }: { navigation: any }) => {
           onRefresh={onRefresh}
         />
       )}
+
+      {/* Modal de Detalhes da Paleta */}
+      <PaletteDetailsModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        palette={selectedPalette}
+        onAddToFavorites={onRefresh}
+      />
     </SafeAreaView>
   );
 };
 
-export default ExploreScreen;
+export default ExplorePalettesScreen;
