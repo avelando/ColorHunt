@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { getFollowersWithStatus, followUser } from "../services/userService";
+import { getFollowers, followUser } from "../services/userService";
 import ScreenContainer from "../components/ScreenContainer";
 import MiniTabView from "../components/TabView";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,7 +25,7 @@ const FollowersScreen = ({ route, navigation }: { route: any; navigation: any })
 
   const fetchFollowers = async () => {
     try {
-      const data = await getFollowersWithStatus(userId);
+      const data = await getFollowers(userId);
       console.log("Seguidores recebidos:", JSON.stringify(data, null, 2));
       setFollowers(data);
     } catch (error) {
@@ -35,7 +35,7 @@ const FollowersScreen = ({ route, navigation }: { route: any; navigation: any })
       setLoading(false);
       setRefreshing(false);
     }
-  };  
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -66,25 +66,12 @@ const FollowersScreen = ({ route, navigation }: { route: any; navigation: any })
     });
   }, [navigation]);
 
+  // Caso queira manter a navegação entre tabs (seguidores / seguindo)
   const handleTabPress = (tab: "followers" | "following") => {
     if (tab === "following") {
       navigation.replace("Following", { userId });
     }
   };
-
-  const handleFollow = async (followerId: number) => {
-    try {
-      await followUser(userId, followerId);
-  
-      setFollowers((prevFollowers) =>
-        prevFollowers.map((f) =>
-          f.id === followerId ? { ...f, followsBack: true } : f
-        )
-      );
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível seguir o usuário.");
-    }
-  };  
 
   const renderItem = ({ item }: { item: any }) => (
     <View style={styles.itemContainer}>
@@ -98,14 +85,9 @@ const FollowersScreen = ({ route, navigation }: { route: any; navigation: any })
           <Text style={styles.username}>@{item.username}</Text>
         </View>
       </TouchableOpacity>
-  
-      {item.followsBack === false && (
-        <TouchableOpacity style={styles.followButton} onPress={() => handleFollow(item.id)}>
-          <Text style={styles.followButtonText}>Seguir</Text>
-        </TouchableOpacity>
-      )}
+      {/* Botão de seguir removido para exibir apenas os seguidores */}
     </View>
-  );      
+  );
 
   return (
     <ScreenContainer
@@ -160,7 +142,6 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     marginVertical: 5,
-    justifyContent: "space-between",
   },
   userInfo: {
     flexDirection: "row",
@@ -182,17 +163,6 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 14,
     color: "#666",
-  },
-  followButton: {
-    backgroundColor: "#007BFF",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-  },
-  followButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
   },
   emptyText: {
     textAlign: "center",

@@ -1,10 +1,18 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import CustomInput from "../components/CustomInput";
-import { loginUser } from "../services/userService";
+import CustomInput from "../../components/CustomInput";
+import { loginUser } from "../../services/userService";
+import { buttonStyles } from "../../styles/button";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../../types/RockStackParamList.types";
+import { useNavigation } from "@react-navigation/native";
+import { globalStyles } from "../../styles/global";
 
-const LoginScreen = ({ navigation }: { navigation: any }) => {
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, "Login">;
+
+const LoginScreen = () => {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -21,22 +29,25 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
         throw new Error("Dados inválidos recebidos do servidor.");
       }
   
+      console.log("🔍 Salvando token e ID do usuário...");
       await AsyncStorage.setItem("userToken", data.token);
       await AsyncStorage.setItem("userId", data.userId.toString());
-  
-      const storedUserId = await AsyncStorage.getItem("userId");
-      console.log("✅ User ID salvo:", storedUserId);
-  
+
       Alert.alert("Sucesso", "Login realizado!");
-      navigation.navigate("Tabs", { screen: "Explorar" });
+      
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Tabs" }],
+      });
     } catch (error: any) {
+      console.error("❌ Erro ao logar:", error.message);
       Alert.alert("Erro", error.message || "Credenciais inválidas.");
     }
-  };      
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+    <View style={globalStyles.container}>
+      <Text style={globalStyles.title}>Login</Text>
       <CustomInput
         label="Email"
         placeholder="Digite seu email"
@@ -51,51 +62,17 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
         value={password}
         onChangeText={setPassword}
       />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Entrar</Text>
+      <TouchableOpacity style={buttonStyles.button} onPress={handleLogin}>
+        <Text style={buttonStyles.buttonText}>Entrar</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={styles.registerLink}
+        style={globalStyles.registerLink}
         onPress={() => navigation.navigate("Register")}
       >
-        <Text style={styles.registerText}>Não tem uma conta? Cadastre-se</Text>
+        <Text style={globalStyles.registerText}>Não tem uma conta? Cadastre-se</Text>
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  button: {
-    width: "100%",
-    padding: 15,
-    backgroundColor: "#007BFF",
-    borderRadius: 5,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  registerLink: {
-    marginTop: 15,
-  },
-  registerText: {
-    color: "#007BFF",
-  },
-});
 
 export default LoginScreen;

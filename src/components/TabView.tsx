@@ -10,6 +10,7 @@ const MiniTabView: React.FC<MiniTabViewProps> = ({ activeTab, onTabPress }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
+        activeOpacity={1}
         style={[styles.tab, activeTab === "followers" && styles.activeTab]}
         onPress={() => onTabPress("followers")}
       >
@@ -18,6 +19,7 @@ const MiniTabView: React.FC<MiniTabViewProps> = ({ activeTab, onTabPress }) => {
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
+        activeOpacity={1}
         style={[styles.tab, activeTab === "following" && styles.activeTab]}
         onPress={() => onTabPress("following")}
       >

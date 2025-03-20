@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import CustomInput from "../components/CustomInput";
-import { registerUser } from "../services/userService";
+import CustomInput from "../../components/CustomInput";
+import { registerUser } from "../../services/userService";
 
 const RegisterScreen = ({ navigation }: { navigation: any }) => {
   const [name, setName] = useState("");

@@ -1,4 +1,4 @@
-import { TabParamList } from "./TabParamList";
+import { TabParamList } from "./TabParamList.types";
 
 export type RootStackParamList = {
   Login: undefined;

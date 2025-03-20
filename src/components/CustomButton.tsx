@@ -1,6 +1,7 @@
 import React from "react";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import { CustomButtonProps } from "../interface/CustomButtonProps";
+import { TouchableOpacity, Text } from "react-native";
+import { CustomButtonProps } from "../interfaces/CustomButtonProps";
+import { buttonStyles } from "../styles/button";
 
 const CustomButton: React.FC<CustomButtonProps> = ({
   title,
@@ -8,20 +9,24 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   filled = true,
   containerStyle,
   textStyle,
+  style,
 }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
       style={[
-        styles.button,
-        filled ? styles.filledButton : styles.outlineButton,
+        buttonStyles.button,
+        filled
+          ? { backgroundColor: "#d9534f" }
+          : { borderWidth: 2, borderColor: "#d9534f", backgroundColor: "transparent" },
         containerStyle,
+        style,
       ]}
     >
       <Text
         style={[
-          styles.buttonText,
-          filled ? styles.filledText : styles.outlineText,
+          buttonStyles.buttonText,
+          filled ? { color: "#fff" } : { color: "#d9534f" },
           textStyle,
         ]}
       >
@@ -30,31 +35,5 @@ const CustomButton: React.FC<CustomButtonProps> = ({
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-    width: "40%",
-  },
-  filledButton: {
-    backgroundColor: "#d9534f",
-  },
-  outlineButton: {
-    borderWidth: 2,
-    borderColor: "#d9534f",
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  filledText: {
-    color: "#fff",
-  },
-  outlineText: {
-    color: "#d9534f",
-  },
-});
 
 export default CustomButton;

@@ -1,69 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ActivityIndicator, View } from "react-native";
-import LoginScreen from "../screens/loginScreen";
-import RegisterScreen from "../screens/registerScreen";
-import TabNavigator from "./TabNavigator";
-import PaletteScreen from "../screens/paletteScreen";
-import FollowersScreen from "../screens/followersScreen";
-import FollowingScreen from "../screens/followingScreen";
-import { RootStackParamList } from "../types/RootStackParamList";
-import OtherUserProfileScreen from "../screens/otherProfileScreen";
+import LoginScreen from "../screens/auth/LoginScreen";
+import RegisterScreen from "../screens/auth/RegisterScreen";
+import TabNavigator from "./TabsNavigator";
+import MyPalettesScreen from "../screens/MyPalettesScreen";
+import PaletteScreen from "../screens/PaletteScreen";
+import ProfileScreen from "../screens/ProfileScreen";
+import EditProfileScreen from "../screens/EditProfileScreen";
+import CreatePaletteScreen from "../screens/CreatePaletteScreen";
+import EditPaletteScreen from "../screens/EditPaletteScreen";
+import FollowersScreen from "../screens/FollowersScreen";
+import FollowingScreen from "../screens/FollowingScreen";
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator();
 
 const AppNavigator = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const checkUserToken = async () => {
-    const token = await AsyncStorage.getItem("userToken");
-    if (token) {
-      try {
-        await getUser();
-        setIsAuthenticated(true);
-      } catch (error) {
-        await AsyncStorage.removeItem("userToken");
-        await AsyncStorage.removeItem("userId");
-        setIsAuthenticated(false);
-      }
-    } else {
-      setIsAuthenticated(false);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    checkUserToken();
-  }, []);
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
   return (
     <Stack.Navigator
-      initialRouteName={isAuthenticated ? "Tabs" : "Login"}
+      initialRouteName="Login"
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
-      <Stack.Screen name="CreatePalette" component={PaletteScreen} />
+      <Stack.Screen name="Minhas Paletas" component={MyPalettesScreen} />
+      <Stack.Screen name="Paleta" component={PaletteScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Editar" component={EditProfileScreen} />
+      <Stack.Screen name="CreatePalette" component={CreatePaletteScreen} />
+      <Stack.Screen name="EditPalette" component={EditPaletteScreen} />
       <Stack.Screen name="Followers" component={FollowersScreen} />
       <Stack.Screen name="Following" component={FollowingScreen} />
-      <Stack.Screen name="OtherUserProfile" component={OtherUserProfileScreen} />
     </Stack.Navigator>
   );
 };
 
 export default AppNavigator;
-function getUser() {
-  throw new Error("Function not implemented.");
-}
-

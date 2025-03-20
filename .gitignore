@@ -3,9 +3,6 @@
 # dependencies
 node_modules/
 
-app.json
-.env
-
 # Expo
 .expo/
 dist/
@@ -33,7 +30,9 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+.env.d.ts
 
 # typescript
 *.tsbuildinfo

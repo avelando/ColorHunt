@@ -1,17 +1,17 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import ExploreScreen from "../screens/exploreScreen";
-import MyPalettesScreen from "../screens/myPalettesScreen";
-import ProfileScreen from "../screens/profileScreen";
+import ExploreScreen from "../screens/ExploreScreen";
+import MyPalettesScreen from "../screens/MyPalettesScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 import { Ionicons } from "@expo/vector-icons";
-import { TabParamList } from "../types/TabParamList";
+import { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
 
-const Tab = createBottomTabNavigator<TabParamList>();
+const Tab = createBottomTabNavigator();
 
-const TabNavigator = () => {
+const TabsNavigator = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={({ route }: { route: any }): BottomTabNavigationOptions => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName = "";
           if (route.name === "Explorar") {
@@ -25,6 +25,7 @@ const TabNavigator = () => {
         },
         tabBarActiveTintColor: "#007BFF",
         tabBarInactiveTintColor: "gray",
+        headerShown: false,
       })}
     >
       <Tab.Screen name="Explorar" component={ExploreScreen} />
@@ -34,4 +35,4 @@ const TabNavigator = () => {
   );
 };
 
-export default TabNavigator;
+export default TabsNavigator;

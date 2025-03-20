@@ -1,13 +1,8 @@
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, ViewStyle, RefreshControl, StyleProp, View } from 'react-native';
-
-interface ScreenContainerProps {
-  children: React.ReactNode;
-  refreshing?: boolean;
-  onRefresh?: () => void;
-  containerStyle?: StyleProp<ViewStyle>;
-  scrollable?: boolean;
-}
+import React from "react";
+import { SafeAreaView, ScrollView, RefreshControl, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ScreenContainerProps } from "../interfaces/ScreenContainerProps";
+import { screenContainerStyles } from "../styles/screenContainer";
 
 const ScreenContainer: React.FC<ScreenContainerProps> = ({
   children,
@@ -16,13 +11,21 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   containerStyle,
   scrollable = true,
 }) => {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={[styles.container, containerStyle]}>
+    <SafeAreaView
+      style={[screenContainerStyles.safeArea, { paddingTop: insets.top }, containerStyle]}
+    >
+      <View style={[screenContainerStyles.container, { flex: 1 }]}>
         {scrollable ? (
           <ScrollView
-            contentContainerStyle={styles.contentContainer}
-            refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined}
+            contentContainerStyle={screenContainerStyles.contentContainer}
+            refreshControl={
+              onRefresh ? (
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              ) : undefined
+            }
           >
             {children}
           </ScrollView>
@@ -33,18 +36,5 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    flexGrow: 1,
-  },
-});
 
 export default ScreenContainer;

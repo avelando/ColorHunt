@@ -55,10 +55,7 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
       headerTintColor: "#000",
       headerStyle: { backgroundColor: "#fff", elevation: 0, shadowOpacity: 0 },
       headerLeft: () => (
-        <TouchableOpacity
-          style={styles.headerLeft}
-          onPress={() => navigation.navigate("Tabs", { screen: "Perfil" })}
-        >
+        <TouchableOpacity style={styles.headerLeft} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
       ),
@@ -67,6 +64,7 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
 
   const handleTabPress = (tab: "followers" | "following") => {
     if (tab === "followers") {
+      // Alterna para a tela de seguidores, mantendo o parâmetro userId
       navigation.replace("Followers", { userId });
     }
   };
@@ -85,7 +83,7 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
         <Text style={styles.username}>@{item.username}</Text>
       </View>
     </TouchableOpacity>
-  );  
+  );
 
   return (
     <ScreenContainer

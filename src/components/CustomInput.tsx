@@ -1,37 +1,24 @@
 import React from "react";
-import { TextInput, View, StyleSheet, Text, TextInputProps } from "react-native";
-
-interface CustomInputProps extends TextInputProps {
-  label: string;
-}
+import { TextInput, View, Text } from "react-native";
+import { CustomInputProps } from "../interfaces/CustomInputProps";
 
 const CustomInput: React.FC<CustomInputProps> = ({ label, ...props }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput style={styles.input} {...props} />
+    <View style={{ width: "100%", marginVertical: 10 }}>
+      <Text style={{ fontSize: 14, marginBottom: 5, color: "#333" }}>{label}</Text>
+      <TextInput
+        style={{
+          width: "100%",
+          padding: 10,
+          borderWidth: 1,
+          borderColor: "#ccc",
+          borderRadius: 5,
+          backgroundColor: "#fff",
+        }}
+        {...props}
+      />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    marginVertical: 10,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: "#333",
-  },
-  input: {
-    width: "100%",
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    backgroundColor: "#fff",
-  },
-});
 
 export default CustomInput;

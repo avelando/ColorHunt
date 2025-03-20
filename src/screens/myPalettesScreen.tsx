@@ -4,39 +4,47 @@ import {
   TouchableOpacity, 
   Alert, 
   FlatList, 
-  StyleSheet 
+  View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SafeAreaView from "../components/ScreenContainer";
 import PaletteCard from "../components/PaletteCard";
-import { Palette } from "../interface/PaletteProps";
+import { Palette } from "../interfaces/PaletteProps";
 import { getUserPalettes } from "../services/paletteService";
+import { myPaletteScreenStyles } from "../styles/myPalettesScreen";
 
 const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
+  const insets = useSafeAreaInsets();
   const [palettes, setPalettes] = useState<Palette[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  // Função para carregar as paletas do usuário
   const loadPalettes = async () => {
     try {
       setLoading(true);
       const result = await getUserPalettes();
-      console.log("Paletas recebidas do serviço:", result);
-      const sortedPalettes = result.palettes.sort(
+  
+      console.log("🔍 Paletas recebidas:", result);
+  
+      if (!Array.isArray(result)) {
+        throw new Error("Formato inesperado de resposta das paletas.");
+      }
+  
+      const sortedPalettes = result.sort(
         (a: Palette, b: Palette) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
+  
       setPalettes(sortedPalettes);
     } catch (error) {
-      console.error("Erro ao carregar paletas:", error);
+      console.error("❌ Erro ao carregar paletas:", error);
       Alert.alert("Erro", "Não foi possível carregar as paletas.");
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
-  // Atualiza as paletas ao puxar para atualizar
   const onRefresh = async () => {
     setRefreshing(true);
     await loadPalettes();
@@ -47,7 +55,6 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     loadPalettes();
   }, []);
 
-  // Função para tirar foto e navegar para a tela de criação de paleta
   const handleTakePhoto = async () => {
     const { granted } = await ImagePicker.requestCameraPermissionsAsync();
     if (!granted) {
@@ -64,7 +71,6 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     }
   };
 
-  // Função para escolher foto da galeria e navegar para a tela de criação de paleta
   const handleChooseFromGallery = async () => {
     const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!granted) {
@@ -94,11 +100,10 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
     );
   };
 
-  // Renderiza cada paleta usando o PaletteCard
   const renderItem = ({ item }: { item: Palette }) => (
     <TouchableOpacity
       onPress={() =>
-        navigation.navigate("CreatePalette", { paletteId: item.id, onSave: loadPalettes })
+        navigation.navigate("EditPalette", { paletteId: item.id, onSave: loadPalettes })
       }
     >
       <PaletteCard
@@ -111,17 +116,18 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
   );
 
   return (
-    <SafeAreaView containerStyle={styles.container} scrollable={false}>
+    <SafeAreaView containerStyle={myPaletteScreenStyles.container} scrollable={false}>
       {loading ? (
-        <Text style={styles.loadingText}>Carregando...</Text>
+        <Text style={myPaletteScreenStyles.loadingText}>Carregando...</Text>
       ) : (
         <FlatList
           data={palettes}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          ListHeaderComponent={<View style={{ height: insets.top }} />} 
           ListEmptyComponent={
             <TouchableOpacity
-              style={styles.emptyContainer}
+              style={myPaletteScreenStyles.emptyContainer}
               onPress={showImageOptions}
             >
               <Text>Nenhuma paleta encontrada. Toque para criar uma.</Text>
@@ -132,46 +138,11 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
         />
       )}
 
-      {/* Botão flutuante para adicionar nova paleta */}
-      <TouchableOpacity style={styles.addButton} onPress={showImageOptions}>
-        <Text style={styles.addButtonText}>+</Text>
+      <TouchableOpacity style={myPaletteScreenStyles.addButton} onPress={showImageOptions}>
+        <Text style={myPaletteScreenStyles.addButtonText}>+</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 50,
-  },
-  addButton: {
-    position: "absolute",
-    bottom: 30,
-    right: 30,
-    backgroundColor: "#6200ee",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
-  },
-  addButtonText: {
-    color: "#fff",
-    fontSize: 32,
-    fontWeight: "bold",
-  },
-  loadingText: {
-    textAlign: "center",
-    marginTop: 20,
-  },
-});
 
 export default MyPalettesScreen;
