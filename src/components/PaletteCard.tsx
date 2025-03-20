@@ -18,6 +18,10 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
     palette.photo?.imageUrl ||
     "https://via.placeholder.com/150";
 
+  const displayUsername = palette.original && palette.original.user
+    ? `@${palette.original.user.username} - @${palette.user?.username || palette.userId}`
+    : `@${palette.user?.username || palette.userId}`;
+
   return (
     <View style={paletteCardStyles.card}>
       <View style={paletteCardStyles.imageContainer}>
@@ -36,9 +40,7 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
         )}
 
         <Text style={paletteCardStyles.title}>{palette.title || "Sem título"}</Text>
-        <Text style={paletteCardStyles.username}>
-          @{palette.user?.username || palette.userId}
-        </Text>
+        <Text style={paletteCardStyles.username}>{displayUsername}</Text>
 
         <View style={paletteCardStyles.paletteRow}>
           {palette.colors && palette.colors.length > 0 ? (

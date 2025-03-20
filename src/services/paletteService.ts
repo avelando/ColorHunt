@@ -121,16 +121,6 @@ export const deletePalette = async (paletteId: string): Promise<string> => {
   }
 };
 
-export const getPublicPalettes = async (): Promise<Palette[]> => {
-  try {
-    const response: AxiosResponse<Palette[]> = await api.get('/palettes/public/all');
-    return response.data;
-  } catch (error) {
-    console.error('❌ Erro ao buscar paletas públicas:', error);
-    throw error;
-  }
-};
-
 export const getUserPublicPalettes = async (): Promise<Palette[]> => {
   try {
     const response: AxiosResponse<Palette[]> = await api.get('/palettes/public/user');
@@ -141,20 +131,10 @@ export const getUserPublicPalettes = async (): Promise<Palette[]> => {
   }
 };
 
-export const getExplorePalettes = async (page = 1, limit = 10): Promise<Palette[]> => {
-  try {
-    const response: AxiosResponse<Palette[]> = await api.get(`/palettes/explore/all?page=${page}&limit=${limit}`);
-    return response.data;
-  } catch (error) {
-    console.error('❌ Erro ao explorar paletas:', error);
-    throw error;
-  }
-};
-
 export const getPaletteDetails = async (paletteId: string): Promise<Palette> => {
   try {
     const response: AxiosResponse<Palette> = await api.get(`/palettes/details/${paletteId}`);
-    return response.data.palette;
+    return response.data;
   } catch (error) {
     console.error('❌ Erro ao buscar detalhes da paleta:', error);
     throw error;
@@ -169,4 +149,9 @@ export const duplicatePalette = async (paletteId: string): Promise<Palette> => {
     console.error('❌ Erro ao duplicar paleta:', error);
     throw error;
   }
+};
+
+export const getExplorePalettes = async () => {
+  const response = await api.get("/palettes/explore");
+  return response.data.palettes;
 };

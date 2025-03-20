@@ -1,7 +1,6 @@
 import { ColorProps } from "./ColorProps";
 
 export interface Palette {
-  palette: Palette | PromiseLike<Palette>;
   id: string;
   photoId: string;
   title: string;
@@ -21,6 +20,20 @@ export interface Palette {
     name: string;
     username: string;
     profilePhoto: string;
+  };
+
+  original?: {
+    id: string;
+    photoId: string;
+    userId: string;
+    title: string;
+    isPublic: string;
+    createdAt: string;
+    originalId?: string;
+    user?: {
+      id: string;
+      username: string;
+    };
   };
 
   imageUrl?: string;

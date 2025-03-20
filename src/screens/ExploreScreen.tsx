@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Text, 
-  FlatList, 
-  View, 
+import {
+  Text,
+  FlatList,
+  View,
   TouchableOpacity,
-  Alert
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SafeAreaView from "../components/ScreenContainer";
 import PaletteCard from "../components/PaletteCard";
 import PaletteDetailsModal from "../components/PaletteDetailsModal";
 import { Palette } from "../interfaces/PaletteProps";
-import { getPublicPalettes } from "../services/paletteService";
+import { getExplorePalettes } from "../services/paletteService";
 import { exploreStyles } from "../styles/explore";
 
 const ExplorePalettesScreen = ({ navigation }: { navigation: any }) => {
@@ -22,12 +22,12 @@ const ExplorePalettesScreen = ({ navigation }: { navigation: any }) => {
   const [selectedPalette, setSelectedPalette] = useState<Palette | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
-  const loadPublicPalettes = async () => {
+  const loadPalettes = async () => {
     try {
       setLoading(true);
-      const result = await getPublicPalettes();
+      const result = await getExplorePalettes();
 
-      console.log("🔍 Paletas públicas recebidas:", result);
+      console.log("🔍 Paletas exploradas recebidas:", result);
 
       if (!Array.isArray(result)) {
         throw new Error("Formato inesperado de resposta das paletas.");
@@ -49,22 +49,17 @@ const ExplorePalettesScreen = ({ navigation }: { navigation: any }) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadPublicPalettes();
+    await loadPalettes();
     setRefreshing(false);
   };
 
   useEffect(() => {
-    loadPublicPalettes();
+    loadPalettes();
   }, []);
 
   const handleOpenModal = (palette: Palette) => {
     setSelectedPalette(palette);
     setModalVisible(true);
-  };
-
-  const handleAddToFavorites = () => {
-    Alert.alert("✅ Sucesso", "Paleta adicionada à sua lista!");
-    setModalVisible(false);
   };
 
   const renderItem = ({ item }: { item: Palette }) => (
