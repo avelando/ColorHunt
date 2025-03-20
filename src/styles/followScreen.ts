@@ -51,4 +51,16 @@ export const followStyles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
+  followButton: {
+    backgroundColor: "#007BFF",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+    marginLeft: "auto",
+  },
+  followButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },  
 });

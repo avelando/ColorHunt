@@ -100,6 +100,29 @@ export const getFollowing = async (userId: string): Promise<UserProps[]> => {
   }
 };
 
+export const getFollowersWithStatus = async (userId: string) => {
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) throw new Error("Token não encontrado.");
+
+    const response: AxiosResponse<{ followers: UserProps[]; followingIds: string[] }> = 
+      await api.get(`/users/${userId}/followers-status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+    const { followers, followingIds } = response.data;
+
+    return followers.map((follower) => ({
+      ...follower,
+      profilePhoto: follower.profilePhoto || "https://cdn-icons-png.flaticon.com/512/847/847969.png",
+      seguindoDeVolta: followingIds.includes(follower.id),
+    }));
+  } catch (error) {
+    console.error("❌ Erro ao buscar seguidores:", error);
+    throw error;
+  }
+};
+
 export const getUserStats = async (userId: string): Promise<{ palettes: number; followers: number; following: number }> => {
   try {
     const response: AxiosResponse<{ palettes: number; followers: number; following: number }> = await api.get(`/users/${userId}/stats`);
@@ -132,10 +155,30 @@ export const getUserProfile = async (userId: string): Promise<UserProfileProps> 
 
 export const followUser = async (followId: string): Promise<{ message: string }> => {
   try {
-    const response: AxiosResponse<{ message: string }> = await api.post("/users/follow", { followId });
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) throw new Error("Token não encontrado.");
+
+    console.log("🔑 Enviando token para API:", token);
+    console.log("➡️ Tentando seguir usuário com ID:", followId);
+
+    const response: AxiosResponse<{ message: string }> = await api.post(
+      "/users/follow",
+      { followId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log("✅ Sucesso ao seguir:", response.data);
     return response.data;
-  } catch (error) {
-    console.error("❌ Erro ao seguir usuário:", error);
+  } catch (error: any) {
+    console.error("❌ Erro ao seguir usuário:", error.response?.data || error.message);
+
+    if (error.response) {
+      console.log("📌 Status Code:", error.response.status);
+      console.log("📌 Resposta da API:", error.response.data);
+    } else {
+      console.log("📌 Erro desconhecido:", error);
+    }
+
     throw error;
   }
 };

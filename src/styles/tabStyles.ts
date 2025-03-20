@@ -4,7 +4,7 @@ export const tabStyles = StyleSheet.create({
   container: {
     flexDirection: "row",
     marginHorizontal: 10,
-    marginVertical: 10,
+    marginVertical: 0,
     borderRadius: 8,
     overflow: "hidden",
     borderWidth: 1,
@@ -16,11 +16,11 @@ export const tabStyles = StyleSheet.create({
     alignItems: "center",
   },
   activeTab: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "#6a1b9a",
   },
   tabText: {
     fontSize: 16,
-    color: "#007BFF",
+    color: "#6a1b9a",
   },
   activeTabText: {
     color: "#fff",
