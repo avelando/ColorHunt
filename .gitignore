@@ -36,3 +36,13 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+colorhunt.jks
+
+android/
+
+.vscode/
+
+eas.json
+
+.vscode/

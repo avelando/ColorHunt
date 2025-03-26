@@ -148,7 +148,7 @@ const MyPalettesScreen = ({ navigation }: { navigation: any }) => {
                 {
                   translateY: slideAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [50, 0], // inicia 50 unidades abaixo e desliza para a posição final
+                    outputRange: [50, 0],
                   }),
                 },
               ],

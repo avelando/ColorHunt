@@ -9,6 +9,8 @@ import {
   ScrollView,
   SafeAreaView,
   AppState,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import {
   createPaletteWithImage,
@@ -24,6 +26,8 @@ import { PaletteScreenProps } from "../interfaces/PaletteScreenProps";
 import { Ionicons } from "@expo/vector-icons";
 import ColorPickerModal from "../components/ColorPickerModal";
 import CustomButton from "../components/CustomButton";
+import ScreenContainer from "../components/ScreenContainer";
+import ColorBox from "../components/ColorBox";
 
 const CreatePaletteScreen: React.FC<PaletteScreenProps> = ({ route, navigation }) => {
   const photoUriParam = route.params?.photoUri || null;
@@ -185,103 +189,119 @@ const CreatePaletteScreen: React.FC<PaletteScreenProps> = ({ route, navigation }
   }
 
   return (
-    <SafeAreaView style={paletteScreenStyles.safeArea}>
-      <ScrollView contentContainerStyle={paletteScreenStyles.container}>
-        <Text style={paletteScreenStyles.headerText}>Criar Nova Paleta</Text>
-
-        {palette?.photo?.imageUrl || photoUriParam ? (
-          <Image
-            source={{ uri: palette?.photo?.imageUrl || photoUriParam }}
-            style={paletteScreenStyles.photo}
-          />
-        ) : (
-          <Text style={paletteScreenStyles.warningText}>Nenhuma imagem disponível.</Text>
-        )}
-
-        {palette?.colors && palette.colors.length > 0 && (
-          <View style={paletteScreenStyles.colorsContainer}>
-            {palette.colors.map((color, index) => (
-              <TouchableOpacity
-                key={index}
-                style={paletteScreenStyles.colorItem}
-                onPress={() => handleEditColor(color.id!, color.hex)}
-              >
-                <View
-                  style={[paletteScreenStyles.colorSwatch, { backgroundColor: color.hex }]}
-                />
-                <Text style={paletteScreenStyles.colorHex}>{color.hex}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        <ColorPickerModal
-          visible={modalVisible}
-          color={selectedColor}
-          onClose={() => setModalVisible(false)}
-          onColorSelect={(newColor) => {
-            if (selectedColorId && palette) {
-              const updatedColors = palette.colors.map((c) =>
-                c.id === selectedColorId ? { ...c, hex: newColor } : c
-              );
-              setPalette({ ...palette, colors: updatedColors });
-            }
-          }}
-        />
-
-        <View style={paletteScreenStyles.inputWrapper}>
-          <TextInput
-            style={paletteScreenStyles.input}
-            value={paletteName}
-            placeholder="Nome da Paleta"
-            onChangeText={(text) => {
-              setPaletteName(text);
-            }}
-          />
-          <Ionicons name="pencil" size={20} color="#ccc" style={paletteScreenStyles.inputIconPencil} />
-        </View>
-
-        <TouchableOpacity
-          onPress={() => setIsPublic(!isPublic)}
-          style={[
-            paletteScreenStyles.privacyButton,
-            { backgroundColor: isPublic ? "green" : "red" },
-          ]}
-        >
-          <Ionicons
-            name={isPublic ? "lock-open" : "lock-closed"}
-            size={18}
-            color="white"
-          />
-          <Text style={paletteScreenStyles.privacyButtonText}>
-            {isPublic ? "Pública" : "Privada"}
+    <ScreenContainer scrollable={true}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={paletteScreenStyles.container}>
+          <Text style={[paletteScreenStyles.headerText, { marginBottom: 15, marginTop: 15 }]}>
+            Criar Paleta
           </Text>
-        </TouchableOpacity>
 
-        <View style={paletteScreenStyles.buttonsContainer}>
-          <CustomButton
-            title="Descartar"
-            onPress={handleDiscardPalette}
-            filled={true}
-            containerStyle={{
-              ...paletteScreenStyles.buttonShared,
-              backgroundColor: "#dc3545",
+          {palette?.photo?.imageUrl ? (
+            <Image source={{ uri: palette.photo.imageUrl }} style={paletteScreenStyles.photo} />
+          ) : (
+            <Text style={paletteScreenStyles.warningText}>Nenhuma imagem disponível.</Text>
+          )}
+  
+          <View style={paletteScreenStyles.inputWrapper}>
+            <TextInput
+              style={paletteScreenStyles.input}
+              value={paletteName}
+              placeholder="Nome da Paleta"
+              onChangeText={(text) => {
+                setPaletteName(text);
+              }}
+            />
+            <Ionicons name="pencil" size={20} color="#ccc" style={paletteScreenStyles.inputIconPencil} />
+          </View>
+  
+          <TouchableOpacity
+            onPress={() => {
+              setIsPublic(!isPublic);
             }}
-            textStyle={{ ...paletteScreenStyles.buttonTextShared, color: "#fff" }}
-          />
-          <CustomButton
-            title="Salvar Paleta"
-            onPress={handleSavePalette}
-            filled={true}
-            containerStyle={{
-              ...paletteScreenStyles.buttonShared,
-              backgroundColor: "#28a745",
+            style={[
+              paletteScreenStyles.privacyToggle,
+              {
+                backgroundColor: isPublic ? "#6a1b9a" : "#fff",
+                borderColor: "#6a1b9a",
+              },
+            ]}
+          >
+            <Ionicons
+              name={isPublic ? "lock-open" : "lock-closed"}
+              size={18}
+              color={isPublic ? "#fff" : "#6a1b9a"}
+            />
+            <Text
+              style={[
+                paletteScreenStyles.privacyToggleText,
+                { color: isPublic ? "#fff" : "#6a1b9a" },
+              ]}
+            >
+              {isPublic ? "Pública" : "Privada"}
+            </Text>
+          </TouchableOpacity>
+  
+          {palette && palette.colors && palette.colors.length > 0 && (
+            <View style={[paletteScreenStyles.colorsContainer, { marginBottom: 20 }]}>
+              {palette.colors.map((color, index) => (
+                <ColorBox
+                  key={index}
+                  hex={color.hex}
+                  onPress={() => handleEditColor(color.id!, color.hex)}
+                />
+              ))}
+            </View>
+          )}
+
+          <ColorPickerModal
+            visible={modalVisible}
+            color={selectedColor}
+            onClose={() => setModalVisible(false)}
+            onColorSelect={(newColor) => {
+              if (selectedColorId && palette) {
+                const updatedColors = palette.colors.map((c) =>
+                  c.id === selectedColorId ? { ...c, hex: newColor } : c
+                );
+                setPalette({ ...palette, colors: updatedColors });
+              }
             }}
-            textStyle={{ ...paletteScreenStyles.buttonTextShared, color: "#fff" }}
           />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+          <View style={paletteScreenStyles.fixedBottomButtons}>
+            <CustomButton
+              title="Descartar"
+              onPress={handleDiscardPalette}
+              filled={false}
+              containerStyle={{
+                ...paletteScreenStyles.buttonShared,
+                borderColor: "#6a1b9a",
+                borderWidth: 1.5,
+              }}
+              textStyle={{
+                ...paletteScreenStyles.buttonTextShared,
+                color: "#6a1b9a",
+              }}
+            />
+            <CustomButton
+              title="Salvar"
+              onPress={handleSavePalette}
+              filled={true}
+              containerStyle={{
+                ...paletteScreenStyles.buttonShared,
+                backgroundColor: "#6a1b9a",
+              }}
+              textStyle={{
+                ...paletteScreenStyles.buttonTextShared,
+                color: "#fff",
+              }}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ScreenContainer>
   );
 };
 

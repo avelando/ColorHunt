@@ -145,8 +145,8 @@ export const searchUsers = async (query: string): Promise<UserProps[]> => {
 
 export const getUserProfile = async (userId: string): Promise<UserProfileProps> => {
   try {
-    const response: AxiosResponse<UserProfileProps> = await api.get(`/users/${userId}/profile`);
-    return response.data;
+    const response = await api.get(`/users/${userId}/profile`);
+    return response.data.user;
   } catch (error) {
     console.error("❌ Erro ao buscar perfil do usuário:", error);
     throw error;

@@ -8,6 +8,7 @@ import {
   Image,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { getFollowersWithStatus, followUser } from "../services/userService";
 import ScreenContainer from "../components/ScreenContainer";
@@ -20,20 +21,26 @@ const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 const FollowersScreen = ({ route, navigation }: { route: any; navigation: any }) => {
   const { userId } = route.params;
   const [followers, setFollowers] = useState<any[]>([]);
+  const [loggedUserId, setLoggedUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchFollowers = async () => {
     try {
-      const data = await getFollowersWithStatus(userId);
+      const storedUserId = await AsyncStorage.getItem("userId");
+      setLoggedUserId(storedUserId);
 
+      const data = await getFollowersWithStatus(userId);
       if (!data || !Array.isArray(data)) {
         throw new Error("Dados de seguidores inválidos.");
       }
 
-      console.log("Seguidores recebidos:", JSON.stringify(data, null, 2));
+      // Destaca o usuário logado no topo da lista
+      const currentUser = data.find((f) => f.id === storedUserId);
+      const others = data.filter((f) => f.id !== storedUserId);
+      const ordered = currentUser ? [currentUser, ...others] : others;
 
-      setFollowers(data); // ✅ Agora armazenamos corretamente
+      setFollowers(ordered);
     } catch (error) {
       console.error("Erro ao buscar seguidores:", error);
       Alert.alert("Erro", "Não foi possível carregar os seguidores.");
@@ -44,12 +51,8 @@ const FollowersScreen = ({ route, navigation }: { route: any; navigation: any })
   };
 
   const handleTabPress = (tab: "followers" | "following") => {
-    if (tab === "following") {
-      navigation.replace("Following", { userId });
-    } else {
-      navigation.replace("Followers", { userId });
-    }
-  };  
+    navigation.replace(tab === "following" ? "Following" : "Followers", { userId });
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -81,46 +84,56 @@ const FollowersScreen = ({ route, navigation }: { route: any; navigation: any })
   }, [navigation]);
 
   const handleFollow = async (followerId: string) => {
-    console.log("🔍 Tentando seguir usuário com ID:", followerId);
-  
     try {
-      const response = await followUser(followerId);
-      console.log("✅ Sucesso ao seguir:", response);
-  
-      setFollowers((prevFollowers) =>
-        prevFollowers.map((f) =>
+      await followUser(followerId);
+      setFollowers((prev) =>
+        prev.map((f) =>
           f.id === followerId ? { ...f, seguindoDeVolta: true } : f
         )
       );
     } catch (error) {
-      console.error("❌ Erro ao seguir usuário:", error);
+      console.error("Erro ao seguir usuário:", error);
       Alert.alert("Erro", "Não foi possível seguir o usuário.");
     }
-  };  
+  };
 
-  const renderItem = ({ item }: { item: any }) => (
-    <View style={followStyles.itemContainer}>
-      <TouchableOpacity
-        style={followStyles.userInfo}
-        onPress={() => navigation.navigate("OtherUserProfile", { userId: item.id })}
-      >
-        <Image source={{ uri: item.profilePhoto || DEFAULT_AVATAR }} style={followStyles.avatar} />
-        <View style={followStyles.infoContainer}>
-          <Text style={followStyles.name}>{item.name}</Text>
-          <Text style={followStyles.username}>@{item.username}</Text>
-        </View>
-      </TouchableOpacity>
+  const renderItem = ({ item }: { item: any }) => {
+    const isCurrentUser = item.id === loggedUserId;
 
-      {!item.seguindoDeVolta && (
+    return (
+      <View style={followStyles.itemContainer}>
         <TouchableOpacity
-          style={followStyles.followButton}
-          onPress={() => handleFollow(item.id)}
+          style={followStyles.userInfo}
+          disabled={isCurrentUser}
+          onPress={() => {
+            if (!isCurrentUser) {
+              navigation.navigate("OtherUserProfile", { userId: item.id });
+            }
+          }}
         >
-          <Text style={followStyles.followButtonText}>Seguir</Text>
+          <Image
+            source={{ uri: item.profilePhoto || DEFAULT_AVATAR }}
+            style={followStyles.avatar}
+          />
+          <View style={followStyles.infoContainer}>
+            <Text style={followStyles.name}>
+              {item.name} {isCurrentUser ? "(você)" : ""}
+            </Text>
+            <Text style={followStyles.username}>@{item.username}</Text>
+          </View>
         </TouchableOpacity>
-      )}
-    </View>
-  );
+
+        {!item.seguindoDeVolta && !isCurrentUser && (
+          <TouchableOpacity
+            style={followStyles.followButton}
+            onPress={() => handleFollow(item.id)}
+          >
+            <Text style={followStyles.followButtonText}>Seguir</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   return (
     <ScreenContainer

@@ -4,11 +4,12 @@ export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Register: undefined;
-  OtherUserProfile: { userId: number };
+  OtherUserProfile: { userId: string };
   Tabs: {
     screen?: keyof TabParamList;
   };
   CreatePalette: { imageUri: string };
-  Followers: { userId: number };
-  Following: { userId: number };
+  Followers: { userId: string };
+  Following: { userId: string };
+  PaletteDetail: { paletteId: string };
 };

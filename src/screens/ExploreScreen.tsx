@@ -93,7 +93,6 @@ const ExplorePalettesScreen = ({ navigation }: { navigation: any }) => {
         />
       )}
 
-      {/* Modal de Detalhes da Paleta */}
       {selectedPalette && (
         <PaletteDetailsModal
           visible={modalVisible}

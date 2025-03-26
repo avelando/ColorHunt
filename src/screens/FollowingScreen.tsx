@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getFollowing } from "../services/userService";
 import ScreenContainer from "../components/ScreenContainer";
 import MiniTabView from "../components/TabView";
@@ -20,13 +21,24 @@ const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 const FollowingScreen = ({ route, navigation }: { route: any; navigation: any }) => {
   const { userId } = route.params;
   const [following, setFollowing] = useState<any[]>([]);
+  const [loggedUserId, setLoggedUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchFollowing = async () => {
     try {
+      const storedUserId = await AsyncStorage.getItem("userId");
+      setLoggedUserId(storedUserId);
+
       const data = await getFollowing(userId);
-      setFollowing(data);
+      if (!storedUserId) return setFollowing(data);
+
+      // Coloca o usuário logado no topo
+      const currentUser = data.find((user: any) => user.id === storedUserId);
+      const others = data.filter((user: any) => user.id !== storedUserId);
+      const orderedList = currentUser ? [currentUser, ...others] : others;
+
+      setFollowing(orderedList);
     } catch (error) {
       console.error("Erro ao buscar usuários seguidos:", error);
       Alert.alert("Erro", "Não foi possível carregar os usuários seguidos.");
@@ -68,21 +80,32 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
     }
   };
 
-  const renderItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={followStyles.itemContainer}
-      onPress={() => {
-        console.log("Navegando para perfil de:", item.id);
-        navigation.navigate("OtherUserProfile", { userId: item.id });
-      }}
-    >
-      <Image source={{ uri: item.profilePhoto || DEFAULT_AVATAR }} style={followStyles.avatar} />
-      <View style={followStyles.infoContainer}>
-        <Text style={followStyles.name}>{item.name}</Text>
-        <Text style={followStyles.username}>@{item.username}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }: { item: any }) => {
+    const isCurrentUser = item.id === loggedUserId;
+
+    return (
+      <TouchableOpacity
+        style={followStyles.itemContainer}
+        disabled={isCurrentUser}
+        onPress={() => {
+          if (!isCurrentUser) {
+            navigation.navigate("OtherUserProfile", { userId: item.id });
+          }
+        }}
+      >
+        <Image
+          source={{ uri: item.profilePhoto || DEFAULT_AVATAR }}
+          style={followStyles.avatar}
+        />
+        <View style={followStyles.infoContainer}>
+          <Text style={followStyles.name}>
+            {item.name} {isCurrentUser ? "(você)" : ""}
+          </Text>
+          <Text style={followStyles.username}>@{item.username}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <ScreenContainer
@@ -92,6 +115,7 @@ const FollowingScreen = ({ route, navigation }: { route: any; navigation: any })
       scrollable={false}
     >
       <MiniTabView activeTab="following" onTabPress={handleTabPress} />
+
       {loading ? (
         <View style={followStyles.center}>
           <ActivityIndicator size="large" color="#007BFF" />

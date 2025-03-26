@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  Modal, 
-  TouchableOpacity, 
-  Image, 
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  Image,
   FlatList,
-  Alert
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { PaletteDetailsModalProps } from "../interfaces/PaletteDetailsModalProps";
@@ -15,13 +15,12 @@ import CustomButton from "./CustomButton";
 import ColorBox from "./ColorBox";
 import { paletteModalStyles } from "../styles/paletteModal";
 
-const PaletteDetailsModal: React.FC<PaletteDetailsModalProps> = ({
+const PalettePublicModal: React.FC<PaletteDetailsModalProps> = ({
   visible,
   onClose,
   imageUrl,
   palette,
   onAddToFavorites,
-  navigation
 }) => {
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +34,7 @@ const PaletteDetailsModal: React.FC<PaletteDetailsModalProps> = ({
 
   const handleAddToFavorites = async () => {
     if (!palette) return;
-    
+
     setLoading(true);
     try {
       await duplicatePalette(palette.id.toString());
@@ -49,15 +48,6 @@ const PaletteDetailsModal: React.FC<PaletteDetailsModalProps> = ({
     }
   };
 
-  const handleGoToProfile = () => {
-    if (palette.user?.id) {
-      navigation.navigate("OtherUserProfile", { userId: palette.user.id });
-      onClose();
-    } else {
-      Alert.alert("⚠️ Aviso", "Este usuário não tem um perfil disponível.");
-    }
-  };  
-
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={paletteModalStyles.modalOverlay}>
@@ -69,45 +59,35 @@ const PaletteDetailsModal: React.FC<PaletteDetailsModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <Image 
-            source={{ uri: finalImageUrl }} 
+          <Image
+            source={{ uri: finalImageUrl }}
             style={paletteModalStyles.image}
           />
-
-          <Text style={paletteModalStyles.creator}>Criada por: @{palette.user?.username || "Anônimo"}</Text>
 
           <FlatList
             data={palette.colors}
             keyExtractor={(item) => item.hex}
             horizontal
-            renderItem={({ item }) => (
-              <ColorBox hex={item.hex} />
-            )}
+            renderItem={({ item }) => <ColorBox hex={item.hex} />}
             contentContainerStyle={{ marginTop: 15 }}
           />
 
           <View style={paletteModalStyles.buttonContainer}>
-            <CustomButton 
-              title="Perfil do criador"
-              onPress={handleGoToProfile}
-              filled={false}
-              containerStyle={[paletteModalStyles.button, { borderColor: "#6a1b9a", justifyContent: "center" }]} 
-              textStyle={{ fontSize: 13, color: "#6a1b9a" }}
-            />
-
-            <CustomButton 
+            <CustomButton
               title={loading ? "Copiando..." : "Copiar paleta"}
               onPress={handleAddToFavorites}
               filled={true}
-              containerStyle={[paletteModalStyles.button, { backgroundColor: "#6a1b9a"}]}
+              containerStyle={[
+                paletteModalStyles.button,
+                { backgroundColor: "#6a1b9a" },
+              ]}
               textStyle={{ fontSize: 15, color: "#fff" }}
             />
           </View>
-
         </View>
       </View>
     </Modal>
   );
 };
 
-export default PaletteDetailsModal;
+export default PalettePublicModal;

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image } from "react-native";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { PaletteCardProps } from "../interfaces/PaletteCardProps";
 import { paletteCardStyles } from "../styles/paletteCard";
@@ -8,6 +8,7 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
   palette,
   imageUrl,
   isPublic,
+  onPress,
   showPrivacyStatus,
 }) => {
   const publicStatus = String(isPublic).toLowerCase() === "true";
@@ -18,44 +19,55 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
     palette.photo?.imageUrl ||
     "https://via.placeholder.com/150";
 
-  const displayUsername = palette.original && palette.original.user
-    ? `@${palette.original.user.username} - @${palette.user?.username || palette.userId}`
-    : `@${palette.user?.username || palette.userId}`;
+  const displayUsername =
+    palette.original && palette.original.user
+      ? `@${palette.original.user.username} - @${palette.user?.username || palette.userId}`
+      : `@${palette.user?.username || palette.userId}`;
 
   return (
-    <View style={paletteCardStyles.card}>
-      <View style={paletteCardStyles.imageContainer}>
-        <Image source={{ uri: finalImageUrl }} style={paletteCardStyles.photo} />
-      </View>
+    <TouchableOpacity onPress={onPress} disabled={!onPress}>
+      <View style={paletteCardStyles.card}>
+        <View style={paletteCardStyles.imageContainer}>
+          <Image source={{ uri: finalImageUrl }} style={paletteCardStyles.photo} />
+        </View>
 
-      <View style={paletteCardStyles.cardContent}>
-        {showPrivacyStatus && (
-          <View style={paletteCardStyles.privacyStatus}>
-            <Ionicons
-              name={publicStatus ? "lock-open" : "lock-closed"}
-              size={20}
-              color={publicStatus ? "green" : "red"}
-            />
-          </View>
-        )}
-
-        <Text style={paletteCardStyles.title}>{palette.title || "Sem título"}</Text>
-        <Text style={paletteCardStyles.username}>{displayUsername}</Text>
-
-        <View style={paletteCardStyles.paletteRow}>
-          {palette.colors && palette.colors.length > 0 ? (
-            palette.colors.map((colorObj, index) => (
-              <View
-                key={index}
-                style={[paletteCardStyles.colorBox, { backgroundColor: colorObj.hex }]}
+        <View style={paletteCardStyles.cardContent}>
+          {showPrivacyStatus && (
+            <View style={paletteCardStyles.privacyStatus}>
+              <Ionicons
+                name={publicStatus ? "lock-open" : "lock-closed"}
+                size={20}
+                color={publicStatus ? "green" : "red"}
               />
-            ))
-          ) : (
-            <Text style={paletteCardStyles.noColorsText}>Sem cores disponíveis</Text>
+            </View>
           )}
+
+          <Text style={paletteCardStyles.title}>
+            {palette.title || "Sem título"}
+          </Text>
+
+          {displayUsername && (
+            <Text style={paletteCardStyles.username}>{displayUsername}</Text>
+          )}
+
+          <View style={paletteCardStyles.paletteRow}>
+            {palette.colors && palette.colors.length > 0 ? (
+              palette.colors.map((colorObj, index) => (
+                <View
+                  key={index}
+                  style={[
+                    paletteCardStyles.colorBox,
+                    { backgroundColor: colorObj.hex },
+                  ]}
+                />
+              ))
+            ) : (
+              <Text style={paletteCardStyles.noColorsText}>Sem cores disponíveis</Text>
+            )}
+          </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

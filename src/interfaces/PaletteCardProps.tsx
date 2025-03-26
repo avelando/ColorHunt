@@ -4,6 +4,7 @@ export interface PaletteCardProps {
   palette: Palette;
   imageUrl?: string;
   isPublic: boolean | string;
-  isCurrentUser: boolean;
+  onPress?: () => void;
   showPrivacyStatus?: boolean;
+  isCurrentUser?: boolean;
 }
